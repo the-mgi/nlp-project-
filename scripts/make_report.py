@@ -85,6 +85,26 @@ def main():
     mac["NGoldMedianLines"] = str(int(D["gold_changed_lines"]["50%"])) if "gold_changed_lines" in D else ""
     mac["NGoldMedianFiles"] = str(int(D["gold_files"]["50%"])) if "gold_files" in D else ""
     mac["NGoldMedianHunks"] = str(int(D["gold_hunks"]["50%"])) if "gold_hunks" in D else ""
+    KEY = {"qwen2.5-coder-1.5b": "CoderS", "qwen2.5-coder-3b": "CoderM", "qwen3-1.7b": "QwenS",
+           "qwen3-4b": "QwenM", "llama-3.2-3b": "Llama", "gemma-3-4b": "Gemma", "qwen3-1.7b-think": "Think"}
+    rj, cj, rc_, cc_ = [], [], [], []
+    for m, key in KEY.items():
+        bm = S["by_model"].get(m, {})
+        for cond, tag in (("diff_only", "R"), ("cjb_control", "C")):
+            d = bm.get(cond)
+            if not d:
+                continue
+            mac[f"Acc{tag}{key}"] = f"{pct(d['acc'])}\\%"
+            mac[f"Cal{tag}{key}"] = f"{pct(d['acc_calibrated'])}\\%"
+            mac[f"CalCI{tag}{key}"] = ci(d["acc_calibrated_ci"])
+            mac[f"Flip{tag}{key}"] = f"{pct(d['flip_rate'])}\\%"
+            mac[f"N{tag}{key}"] = str(d["n"])
+            if m != "qwen3-1.7b-think":
+                (rj if tag == "R" else cj).append(d["acc"])
+                (rc_ if tag == "R" else cc_).append(d["acc_calibrated"])
+    rng = lambda xs: f"{pct(min(xs))}--{pct(max(xs))}\\%" if xs else "--"
+    mac["AccRangeR"], mac["AccRangeC"] = rng(rj), rng(cj)
+    mac["CalRangeR"], mac["CalRangeC"] = rng(rc_), rng(cc_)
     for k, v in S.get("extra_macros", {}).items():
         mac[k] = v
     with open(out / "numbers.tex", "w") as fo:
