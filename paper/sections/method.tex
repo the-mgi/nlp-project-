@@ -1,0 +1,142 @@
+\section{Methodology}
+\label{sec:method}
+
+\Cref{fig:pipeline} summarises the pipeline.  It has four stages: selecting
+post-cutoff pull requests, injecting defects, admitting variants by execution,
+and judging.
+
+\begin{figure}[t]
+\centering
+\small
+\fbox{\parbox{0.95\columnwidth}{%
+\textbf{1. Select} PRs created $\geq$ 2025-01-01 (SWE-bench-Live, SWE-rebench)
+$\rightarrow$
+\textbf{2. Apply} gold patch in the task's Docker image, re-render with \texttt{git diff}
+$\rightarrow$
+\textbf{3. Inject} one AST mutation per defect class in the region the patch touches
+$\rightarrow$
+\textbf{4. Admit} a variant only if every test passing with the gold patch still passes
+$\rightarrow$
+\textbf{5. Retrieve} neutral context from the parent commit
+$\rightarrow$
+\textbf{6. Judge} (both orders) and analyse.}}
+\caption{RepoJudgeBench construction and evaluation pipeline.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Source pull requests}
+We take real, merged pull requests from two continuously updated
+repository-level task collections that ship a runnable Docker environment for
+every task: the \texttt{full} split of
+SWE-bench-Live~\cite{zhang2025swebenchlive} and the \texttt{filtered} and
+\texttt{test} splits of SWE-rebench.  Each task provides the gold patch, the
+test patch, the issue text, the list of tests that the fix makes pass
+(FAIL\_TO\_PASS) and the test command.  To limit training-data contamination we
+keep only tasks created on or after 1~January~2025, following the time-window
+idea of LiveCodeBench and SWE-bench-Live.  After de-duplication the pool holds
+\NPoolInstances{} tasks from \NPoolRepos{} repositories.  We discard gold patches
+with more than 400 changed lines and apply a cheap regular-expression screen that
+keeps tasks whose diff contains at least one construct targeted by a mutation
+operator (e.g.\ an \texttt{except} clause, a \texttt{with} statement, a lock or
+an ORM call), in the text the patch adds or in its context lines.
+
+\subsection{Defect taxonomy and injection operators}
+\Cref{tab:operators} lists the six defect classes of the proposal and their
+operators.  Each class is chosen because the defect is typically invisible to
+unit tests but flagged by a careful reviewer.  Operators work on the Python AST
+of the \emph{post-gold} file and edit only source lines, so the variant is
+syntactically valid and idiomatic.  A site is eligible only if it lies inside
+the region the gold patch touches: a line added by the patch, or the body of a
+function the patch modifies.  We record whether the mutated site was written by
+the patch (\emph{added}) or is pre-existing code in a modified function
+(\emph{context}).  Candidates whose AST is unchanged are rejected.  For each
+task we keep at most one primary and one fallback candidate per class, preferring
+added sites, and at most three classes per task.
+
+\begin{table}[t]
+\caption{Defect classes and injection operators.}
+\label{tab:operators}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.27\columnwidth}p{0.66\columnwidth}@{}}
+\toprule
+Class & Operator(s) \\
+\midrule
+N+1 query & remove \texttt{select\_related}/\texttt{prefetch\_related}, \texttt{prefetch\_related\_objects(...)}, or an eager-loading \texttt{.options(selectinload(...))} \\
+Race / concurrency & unwrap a \texttt{with <lock>:} or \texttt{with atomic():} block; drop \texttt{select\_for\_update()}; drop an \texttt{@atomic} decorator \\
+Authorisation & delete an \texttt{if <auth-condition>: raise/return} guard or an access-control decorator \\
+Unsafe migration & make an added column \texttt{NOT NULL} without a default \\
+Resource leak & turn \texttt{with open(...) as f:} (and other closeable resources) into \texttt{f = open(...)}; delete an explicit \texttt{x.close()} \\
+Error swallowing & replace a re-raise in an \texttt{except} block by \texttt{pass}; broaden \texttt{except E:} to \texttt{except Exception:} in a non-re-raising handler; delete a validation guard \texttt{if ...: raise} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Execution-based admission}
+For every task we start its published Docker image (the repository at the
+pull request's parent commit with dependencies installed), apply the gold patch
+and render it again with \texttt{git diff}; the variants are rendered by the
+same command, so formatting cannot reveal which patch is the original.  We then
+apply the test patch and run the pull request's test files (the files touched by
+the test patch and the files of the FAIL\_TO\_PASS tests) with the task's
+\texttt{pytest} command.  A task is kept only if the gold patch passes all of its
+FAIL\_TO\_PASS tests.  A candidate is \emph{admitted} if every test that passes
+with the gold patch also passes with the candidate; otherwise it is recorded as
+\emph{caught by tests}.  The execution oracle therefore scores exactly 0\% on
+\RJB{} by construction: on the PR's tests, gold and variant are
+indistinguishable.
+
+Following SWE-Bench+~\cite{aleithan2024swebenchplus}, we flag \emph{solution
+leakage} when a non-trivial line ($\geq$30 characters) added by the gold patch
+appears verbatim in the issue text, and exclude such tasks from judging.
+
+\subsection{Repository context retrieval (mitigation, O6)}
+To test whether judges fail because they cannot see the code around the diff,
+we retrieve context from the \emph{parent} commit, which is neutral with respect
+to the two candidates.  The retriever collects (i) definitions of non-builtin
+symbols called on changed lines of either candidate and (ii) call sites of
+functions modified by either candidate, found with \texttt{git grep} outside
+test directories.  Definitions are packed first, then call sites, up to a
+character budget $b\in\{2000, 6000\}$ (about 0.6k and 1.7k tokens).  As a
+comparison we also provide the parent-commit versions of the touched files,
+truncated to $b=6000$ characters (``file context'').
+
+\subsection{Judging protocol}
+We use the pairwise prompt distributed with
+\CJB{}~\cite{jiang2025codejudgebench} verbatim, with the issue as the user
+prompt and the two unified diffs as the assistants' answers.  The prompt asks
+for a binary verdict \texttt{[[A>B]]} or \texttt{[[B>A]]}.  Because all judges
+run on CPU, we do not let them generate a free-form explanation in the main
+condition.  Instead, the assistant turn is forced to begin with
+``\texttt{My final verdict is: [[}'' and we read the next-token logits of the
+two tokens that start \texttt{A>B]]} and \texttt{B>A]]}.  This yields a greedy
+verdict (the larger logit) and a verdict probability
+$p_A=\sigma(\ell_A-\ell_B)$.  We check, per tokenizer, that the prefix tokenises
+identically before both continuations.  Every pair is judged in both orders
+(gold as A, gold as B).  A pair's accuracy is the mean of its two greedy
+verdicts, as in \CJB{}.
+
+\textbf{Point-wise condition.}  Each patch is rated alone on a 1--5 scale with
+the same forced-prefix technique, and we take the expected rating under the
+distribution over the five rating tokens.  A pair is correct if the gold patch
+gets the higher expected rating (ties count 0.5).
+
+\textbf{Thinking condition.}  For the hybrid Qwen3 judge we also run its
+thinking mode: the model first generates up to \ThinkBudget{} reasoning tokens
+(greedy), the reasoning block is closed, and the verdict is read as above.
+
+\subsection{Metrics}
+\textbf{Accuracy} is reported with 95\% percentile bootstrap confidence
+intervals over pairs~\cite{efron1979bootstrap} (2{,}000 resamples).
+\textbf{Position bias} is the accuracy gap between presenting the gold patch
+first and second; the \textbf{flip rate} is the share of pairs whose greedy
+verdict picks the same \emph{slot} in both orders (and is therefore right in
+exactly one order).  \textbf{Self-consistency} is the probability that two
+independent temperature-1 samples of the verdict token (restricted to the two
+verdict tokens) agree,
+$p_A^2+(1-p_A)^2$, averaged over prompts; because the verdict is a single token,
+this equals the empirical agreement rate under repeated sampling without having
+to sample.  \textbf{Scaling (O3)}: we fit a logistic regression of per-order
+correctness on $\log_2$(changed lines), number of files and number of hunks of
+the gold patch, with standard errors clustered by pair, and report the diff size
+at which the 95\% interval of predicted accuracy first contains 0.5.

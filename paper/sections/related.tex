@@ -1,0 +1,59 @@
+\section{Related Work}
+\label{sec:related}
+
+\textbf{LLM-as-a-judge.}  Zheng et al.~\cite{zheng2023judging} popularised
+strong LLMs as judges of open-ended answers (MT-Bench, Chatbot Arena) and
+documented position, verbosity and self-enhancement biases.  Wang et
+al.~\cite{wang2023fair} showed that the ranking of two responses can be
+manipulated simply by changing their order of appearance and proposed
+calibration strategies.  Gu et al.~\cite{gu2024survey} survey the design and
+reliability of LLM judges.  We adopt the pairwise protocol and the
+order-swapping analysis of this line of work.
+
+\textbf{Judging code.}  ICE-Score~\cite{zhuo2024icescore} instructs LLMs to
+assess code usefulness and functional correctness without test oracles, and
+CodeJudge~\cite{tong2024codejudge} guides LLMs to ``slow thinking'' to judge
+semantic correctness of generated code without test cases.
+\CJB{}~\cite{jiang2025codejudgebench} is the largest benchmark of LLM judges for
+coding: 5{,}352 pairs over code generation, code repair and unit-test generation
+on LiveCodeBench-v6~\cite{jain2024livecodebench}, with 26 judges.  It finds that
+thinking models are much stronger judges, that pairwise comparison beats
+point-wise scoring (point-wise scores tie about half of the time), that raw
+responses with comments and reasoning judge better than extracted code, and that
+judges are sensitive to response order.  All of its instances are single-file
+and test-decidable; \RJB{} moves the same protocol to repository-level diffs
+whose defects tests do not catch.
+
+\textbf{Repository-level benchmarks and contamination.}
+SWE-bench~\cite{jimenez2024swebench} contains 2{,}294 issue--pull-request
+instances from 12 Python repositories.  SWE-Bench+~\cite{aleithan2024swebenchplus}
+audited it and found widespread solution leakage and weak tests.
+SWE-bench-Live~\cite{zhang2025swebenchlive} continuously collects new
+issue-resolution tasks (initially 1{,}319 tasks from issues created since 2024
+across 93 repositories), each with a Docker image built by its RepoLaunch
+pipeline; we build on its released tasks and images.  LiveCodeBench~\cite{jain2024livecodebench} similarly avoids contamination by
+collecting problems over time windows and evaluating on problems released after
+a model's training cutoff.
+
+\textbf{Execution-free verifiers for software agents.}  R2E-Gym~\cite{jain2025r2egym}
+compares execution-based and execution-free verifiers and reports that the
+latter are biased and often rely on stylistic features.
+SWE-RM~\cite{shum2025swerm} trains execution-free reward models for software
+engineering agents, and R4P~\cite{xu2025r4p} verifies patches by group-wise
+reasoning, reporting 72.2\% accuracy on SWE-bench patches.  Li~\cite{li2026frozen}
+shows that fixed LLM judges make version-dependent errors when comparing
+coding-agent upgrades.  Agent-as-a-Judge~\cite{zhuge2024agent} instead lets
+agentic systems evaluate agentic systems.
+
+\textbf{Code review.}  CodeReviewer~\cite{li2022codereviewer} pre-trains a model
+for code-change quality estimation, review generation and code refinement on
+review data from nine programming languages; quality estimation is the closest
+pre-LLM formulation of our task.  SWE-PRBench~\cite{kumar2026sweprbench}
+evaluates AI code review on 350 pull requests against human-flagged issues and
+reports that models detect only 15--31\% of them and that adding more context
+degrades results.
+
+\textbf{Mutation testing.}  Our variants are mutants in the sense of mutation
+testing~\cite{jia2011mutation}; unlike classical mutants, they are
+\emph{selected} to survive the test suite and to instantiate a
+review-detectable defect class.
