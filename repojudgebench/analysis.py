@@ -112,6 +112,11 @@ def pair_table(v: pd.DataFrame) -> pd.DataFrame:
     piv["self_consistency"] = 0.5 * ((piv["p_a_AB"] ** 2 + (1 - piv["p_a_AB"]) ** 2)
                                      + (piv["p_a_BA"] ** 2 + (1 - piv["p_a_BA"]) ** 2))
     piv["p_first"] = 0.5 * (piv["p_a_AB"] + piv["p_a_BA"])  # mean prob. of choosing slot A
+    # balanced position calibration (Wang et al.): average the probability given to the
+    # gold patch over both orders, which cancels a constant preference for one slot
+    pg = 0.5 * (piv["pgold_AB"] + piv["pgold_BA"])
+    piv["acc_calibrated"] = np.where(pg > 0.5, 1.0, np.where(pg < 0.5, 0.0, 0.5))
+    piv["pgold_mean"] = pg
     # cluster = source task (pairs from one pull request share the gold patch)
     piv["cluster"] = piv["item_id"].map(lambda x: x if x.startswith("cjb::") else x.split("::")[0])
     return piv
@@ -124,7 +129,9 @@ def summarise(pt: pd.DataFrame) -> dict:
     gap = ab - ba
     glo, ghi = _ci(gap, pt)
     sc = pt["self_consistency"].to_numpy()
+    cal = pt["acc_calibrated"].to_numpy()
     return {"n": int(len(pt)), "acc": float(acc.mean()), "ci": [lo, hi],
+            "acc_calibrated": float(cal.mean()), "acc_calibrated_ci": list(_ci(cal, pt)),
             "acc_gold_first": float(ab.mean()), "acc_gold_second": float(ba.mean()),
             "position_gap": float(gap.mean()), "position_gap_ci": [glo, ghi],
             "flip_rate": float(pt["position_flip"].mean()),
@@ -275,7 +282,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", default="results/raw")
     ap.add_argument("--meta", default="data/items/meta.jsonl")
-    ap.add_argument("--build", default="data/build/instances.jsonl")
+    ap.add_argument("--build", nargs="+", default=["data/build/instances.jsonl"])
     ap.add_argument("--out", default="results")
     ap.add_argument("--models", nargs="*", default=None, help="judge order for tables/figures")
     args = ap.parse_args()
@@ -285,7 +292,7 @@ def main():
 
     meta = pd.DataFrame(load_jsonl(Path(args.meta)))
     v = load_verdicts(Path(args.raw))
-    summary: dict = {"dataset": dataset_stats(Path(args.build), meta)}
+    summary: dict = {"dataset": dataset_stats([Path(b) for b in args.build], meta)}
     pt = pair_table(v) if not v.empty else pd.DataFrame()
     models = args.models or sorted(pt["model"].unique()) if not pt.empty else []
     models = [m for m in models if m in set(pt["model"])] if not pt.empty else []
@@ -380,8 +387,8 @@ def main():
                       for m in models}, indent=1))
 
 
-def dataset_stats(build: Path, meta: pd.DataFrame) -> dict:
-    recs = load_jsonl(build)
+def dataset_stats(builds: list[Path], meta: pd.DataFrame) -> dict:
+    recs = [r for b in builds for r in load_jsonl(b)]
     st = Counter(r.get("status") for r in recs)
     cand = Counter()
     caught = Counter()
