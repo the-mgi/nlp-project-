@@ -88,6 +88,16 @@ def cluster_boot_ci(values: np.ndarray, clusters: np.ndarray, b: int = B,
     return (float(np.percentile(stats, 2.5)), float(np.percentile(stats, 97.5)))
 
 
+def _boot_means(values: np.ndarray, clusters: np.ndarray, seed_offset: int = 0) -> np.ndarray:
+    """Bootstrap distribution (B draws) of the mean, resampling clusters."""
+    codes, uniq = pd.factorize(pd.Series(clusters))
+    k = len(uniq)
+    sums = np.bincount(codes, weights=np.asarray(values, float), minlength=k)
+    cnts = np.bincount(codes, minlength=k).astype(float)
+    idx = np.random.default_rng(RNG_SEED + seed_offset).integers(0, k, size=(B, k))
+    return sums[idx].sum(axis=1) / cnts[idx].sum(axis=1)
+
+
 def _ci(values, pt: pd.DataFrame | None = None):
     if pt is not None and "cluster" in pt:
         return cluster_boot_ci(values, pt["cluster"].to_numpy())
@@ -112,6 +122,11 @@ def pair_table(v: pd.DataFrame) -> pd.DataFrame:
     piv["self_consistency"] = 0.5 * ((piv["p_a_AB"] ** 2 + (1 - piv["p_a_AB"]) ** 2)
                                      + (piv["p_a_BA"] ** 2 + (1 - piv["p_a_BA"]) ** 2))
     piv["p_first"] = 0.5 * (piv["p_a_AB"] + piv["p_a_BA"])  # mean prob. of choosing slot A
+    # balanced position calibration (Wang et al.): average the probability given to the
+    # gold patch over both orders, which cancels a constant preference for one slot
+    pg = 0.5 * (piv["pgold_AB"] + piv["pgold_BA"])
+    piv["acc_calibrated"] = np.where(pg > 0.5, 1.0, np.where(pg < 0.5, 0.0, 0.5))
+    piv["pgold_mean"] = pg
     # cluster = source task (pairs from one pull request share the gold patch)
     piv["cluster"] = piv["item_id"].map(lambda x: x if x.startswith("cjb::") else x.split("::")[0])
     return piv
@@ -124,7 +139,9 @@ def summarise(pt: pd.DataFrame) -> dict:
     gap = ab - ba
     glo, ghi = _ci(gap, pt)
     sc = pt["self_consistency"].to_numpy()
+    cal = pt["acc_calibrated"].to_numpy()
     return {"n": int(len(pt)), "acc": float(acc.mean()), "ci": [lo, hi],
+            "acc_calibrated": float(cal.mean()), "acc_calibrated_ci": list(_ci(cal, pt)),
             "acc_gold_first": float(ab.mean()), "acc_gold_second": float(ba.mean()),
             "position_gap": float(gap.mean()), "position_gap_ci": [glo, ghi],
             "flip_rate": float(pt["position_flip"].mean()),
@@ -275,7 +292,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", default="results/raw")
     ap.add_argument("--meta", default="data/items/meta.jsonl")
-    ap.add_argument("--build", default="data/build/instances.jsonl")
+    ap.add_argument("--build", nargs="+", default=["data/build/instances.jsonl"])
     ap.add_argument("--out", default="results")
     ap.add_argument("--models", nargs="*", default=None, help="judge order for tables/figures")
     args = ap.parse_args()
@@ -285,7 +302,7 @@ def main():
 
     meta = pd.DataFrame(load_jsonl(Path(args.meta)))
     v = load_verdicts(Path(args.raw))
-    summary: dict = {"dataset": dataset_stats(Path(args.build), meta)}
+    summary: dict = {"dataset": dataset_stats([Path(b) for b in args.build], meta)}
     pt = pair_table(v) if not v.empty else pd.DataFrame()
     models = args.models or sorted(pt["model"].unique()) if not pt.empty else []
     models = [m for m in models if m in set(pt["model"])] if not pt.empty else []
@@ -314,10 +331,10 @@ def main():
     for m in models:
         bm = summary["by_model"][m]
         if "cjb_control" in bm and "diff_only" in bm:
-            a = pt[(pt.model == m) & (pt.condition == "cjb_control")]["acc"].to_numpy()
-            b = pt[(pt.model == m) & (pt.condition == "diff_only")]["acc"].to_numpy()
-            rng = np.random.default_rng(RNG_SEED)
-            diffs = [rng.choice(a, len(a)).mean() - rng.choice(b, len(b)).mean() for _ in range(B)]
+            ga = pt[(pt.model == m) & (pt.condition == "cjb_control")]
+            gb = pt[(pt.model == m) & (pt.condition == "diff_only")]
+            a, b = ga["acc"].to_numpy(), gb["acc"].to_numpy()
+            diffs = _boot_means(a, ga["cluster"].to_numpy(), 1) - _boot_means(b, gb["cluster"].to_numpy(), 2)
             summary["regime_gap"][m] = {"cjb": float(a.mean()), "repo": float(b.mean()),
                                         "gap": float(a.mean() - b.mean()),
                                         "ci": [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]}
@@ -380,8 +397,9 @@ def main():
                       for m in models}, indent=1))
 
 
-def dataset_stats(build: Path, meta: pd.DataFrame) -> dict:
-    recs = load_jsonl(build)
+def dataset_stats(builds: list[Path], meta: pd.DataFrame) -> dict:
+    from .make_items import dedupe
+    recs = dedupe([r for b in builds for r in load_jsonl(b)])
     st = Counter(r.get("status") for r in recs)
     cand = Counter()
     caught = Counter()
@@ -402,6 +420,13 @@ def dataset_stats(build: Path, meta: pd.DataFrame) -> dict:
         out["instances"] = int(meta["instance_id"].nunique())
         out["by_source"] = meta.groupby("source")["item_id"].count().to_dict()
         out["by_class"] = meta["defect_class"].value_counts().to_dict()
+        if "judged" in meta:
+            out["pairs_judged"] = int(meta["judged"].sum())
+            out["by_class_judged"] = meta[meta["judged"]]["defect_class"].value_counts().to_dict()
+            if "prompt_tokens" in meta:
+                pt_ = meta[meta["judged"]]["prompt_tokens"]
+                out["judged_prompt_tokens"] = {"median": float(pt_.median()), "max": float(pt_.max()),
+                                               "min": float(pt_.min())}
         out["by_operator"] = meta.groupby(["defect_class", "operator"]).size().rename("n").reset_index().to_dict("records")
         out["by_origin"] = meta["site_origin"].value_counts().to_dict()
         for k in ("gold_changed_lines", "gold_files", "gold_hunks"):

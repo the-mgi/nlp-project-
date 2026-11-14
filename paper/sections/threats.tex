@@ -1,0 +1,33 @@
+\subsection{Threats to validity}
+\label{sec:threats}
+
+\textbf{Construct validity.}  Our defects are injected by operators, not
+collected from real rejected pull requests, so their distribution follows the
+operators and the constructs that happen to occur near the patched code.  Some
+operators leave local cues that a pattern matcher can exploit (for example
+\texttt{except Exception: pass}); the static-analysis baseline measures how far
+such cues go.  The plausibility and the defectiveness of the variants were not
+validated by human annotators.
+
+\textbf{Internal validity.}  The admission filter runs the PR's relevant test
+files rather than the whole suite; a variant could in principle break a test
+elsewhere in the repository, which would make the task easier for an execution
+oracle but does not change what the judge sees.  Docker images were pulled
+through a public registry mirror and are the images published with the tasks.
+
+\textbf{Judges and prompting.}  All judges are small (1.5--4B), quantised
+(4--8 bit) open models.  In the main condition they must answer without first
+writing an explanation; the base paper lets judges reason before the verdict,
+so our direct-verdict numbers are a lower bound for these models, and the
+thinking condition measures how much reasoning recovers.
+
+\textbf{Statistical conclusion validity.}  The benchmark is small, rare classes
+have few pairs, and pairs built from the same pull request are correlated; we
+therefore resample tasks rather than pairs in the bootstrap and report
+intervals rather than significance stars.  We do not correct for multiple
+comparisons; per-class and per-condition differences should be read as
+exploratory.
+
+\textbf{Selection.}  Pairs whose diff-only prompt exceeds the judges' token
+budget, and tasks with solution leakage, are excluded from judging, which caps
+the diff sizes the scaling analysis can observe.

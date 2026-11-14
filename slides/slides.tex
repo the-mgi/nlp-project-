@@ -1,0 +1,83 @@
+\documentclass[10pt,aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\input{../paper/generated/numbers.tex}
+\newcommand{\RJB}{RepoJudgeBench}
+\newcommand{\CJB}{CodeJudgeBench}
+
+\title{RepoJudgeBench}
+\subtitle{Does LLM-as-a-Judge reliability survive the move from self-contained functions to repository-level, test-passing code changes?}
+\author{Muhammad Usama \quad (25I-8007)}
+\institute{Natural Language Processing --- Semester Research Project}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Problem definition}
+\begin{itemize}
+  \item LLMs are used as \alert{judges} of code: ranking agent patches, filtering training data, reward models, PR review bots.
+  \item The usual oracle, the test suite, is weak at repository level: in the SWE-Bench+ audit, 32.67\% of accepted SWE-Agent+GPT-4 patches leaked the solution and 31.08\% passed only because the tests were weak (12.47\% $\rightarrow$ 3.97\% resolved after filtering).
+  \item \CJB{} (base paper): 5{,}352 pairs, but every instance is \alert{single-file and test-decidable}.
+\end{itemize}
+\vspace{0.5em}
+\textbf{Research question:} can judges still tell a correct patch from a \emph{test-passing but defective} one when the patch is a multi-file diff in a real repository?
+\end{frame}
+
+\begin{frame}{Motivation}
+\begin{itemize}
+  \item Defects that reviewers reject but tests do not catch: N+1 queries, races, authorisation regressions, unsafe migrations, resource leaks, swallowed errors.
+  \item Judges are already load-bearing infrastructure: their errors propagate into training.
+  \item Known failure modes (order sensitivity, generator sensitivity) are measured only on short, single-file code.
+  \item Contamination: use pull requests created after 1 January 2025 only.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Proposed solution: RepoJudgeBench pipeline}
+\begin{enumerate}
+  \item Real PRs ($\geq$ 2025-01-01) from SWE-bench-Live and SWE-rebench, each with a Docker image.
+  \item Apply the gold patch in the container; re-render with \texttt{git diff}.
+  \item \alert{AST mutation} inside the region the patch touches (6 defect classes).
+  \item \alert{Admission by execution}: keep a variant only if every test that passes with the gold patch still passes.
+  \item Neutral repository context from the parent commit (definitions, call sites).
+  \item Pairwise judging in both orders with the \CJB{} prompt; bootstrap CIs.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Technical contributions}
+\begin{itemize}
+  \item A new evaluation axis: judges on \alert{repository-level, CI-passing} diffs.
+  \item A CI-passing defect-injection and verification harness (\NCandidates{} candidates tested, \TestCatchRate{} caught by the PR's tests).
+  \item A six-class, review-grounded defect taxonomy with executable operators.
+  \item Scaling analysis (diff size, files, hunks), position bias, self-consistency.
+  \item Mitigation: retrieved repository context with a budget ablation.
+  \item Released: dataset, harness, prompts, raw verdict logs.
+\end{itemize}
+\end{frame}
+
+\input{results_slides.tex}
+
+\begin{frame}{Limitations and deviations from the proposal}
+\begin{itemize}
+  \item \NPairs{} pairs from \NRepos{} repositories (proposal: $\geq$300 / $\geq$15): every task needs a multi-GB image and a test run.
+  \item Only small open judges (1.5--4B) on CPU; no closed models (no API access).
+  \item PR test files instead of full suites; no per-instance witness tests; no human validation yet (sheet released).
+  \item N+1, migration and authorisation sites are rare in issue-resolution PRs.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Demonstration}
+\begin{verbatim}
+python scripts/demo.py --model models/qwen2.5-coder-1.5b-instruct-q8_0.gguf
+\end{verbatim}
+\begin{itemize}
+  \item prints one pair: issue, injected defect, the lines where the variant differs,
+  \item number of tests both patches pass,
+  \item judge verdict probabilities in both orders.
+\end{itemize}
+All code, data and logs: \texttt{github.com/the-mgi/nlp-project-}
+\end{frame}
+
+\end{document}
