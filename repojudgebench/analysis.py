@@ -235,6 +235,7 @@ def fig_regimes(summary: dict, models: list[str], path: Path):
 def fig_scaling(pt_all: pd.DataFrame, meta: pd.DataFrame, models: list[str], path: Path):
     plt = _plt()
     d = pt_all.merge(meta[["item_id", "gold_changed_lines", "gold_files"]], on="item_id")
+    d = d[d["model"].isin(models)]
     edges = [0, 10, 25, 50, 100, 10**9]
     labels = ["1-10", "11-25", "26-50", "51-100", ">100"]
     d["bin"] = pd.cut(d["gold_changed_lines"], edges, labels=labels, right=True)
@@ -245,12 +246,15 @@ def fig_scaling(pt_all: pd.DataFrame, meta: pd.DataFrame, models: list[str], pat
     pooled = d.groupby("bin", observed=False)["acc"]
     mean = pooled.mean().reindex(labels).to_numpy()
     ax.plot(range(len(labels)), mean, color="black", lw=2, label="mean of judges")
+    cal = d.groupby("bin", observed=False)["acc_calibrated"].mean().reindex(labels).to_numpy()
+    ax.plot(range(len(labels)), cal, color="black", lw=1.5, ls=":", label="mean, calibrated")
     ax.axhline(0.5, ls="--", lw=0.8, color="grey")
     counts = d[d["model"] == models[0]].groupby("bin", observed=False).size().reindex(labels)
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels([f"{l}\n(n={int(c) if not pd.isna(c) else 0})" for l, c in zip(labels, counts)], fontsize=6.5)
     ax.set_xlabel("Changed lines in the gold patch")
     ax.set_ylabel("Pairwise accuracy")
+    ax.set_ylim(0, 1)
     ax.legend(frameon=False, fontsize=5.5, ncol=2)
     fig.tight_layout()
     fig.savefig(path)

@@ -46,6 +46,25 @@ def main():
     mac["TestCatchRate"] = f"{pct(caught / cand if cand else float('nan'))}\\%"
     mac["NProcessed"] = str(D["instances_processed"])
     mac["NJudges"] = str(len([m for m in models if not m.endswith("-think")]))
+    st_ = S.get("static", {})
+    if st_:
+        mac["StaticRelAcc"] = f"{pct(st_['relevant']['acc'])}\\%"
+        mac["StaticRelFlagVar"] = f"{pct(st_['relevant']['flag_variant_rate'])}\\%"
+        mac["StaticAllAcc"] = f"{pct(st_['all']['acc'])}\\%"
+        mac["NStatic"] = str(st_["n"])
+    if S.get("length_heuristic"):
+        mac["LengthHeurAcc"] = f"{pct(S['length_heuristic']['acc'])}\\%"
+    lb = S.get("length_bias", {}).get("all_judges", {})
+    if "prefers_longer" in lb:
+        mac["PrefersLonger"] = f"{pct(lb['prefers_longer']['rate'])}\\%"
+    rc = S.get("length_relation_counts", {})
+    if rc:
+        tot = sum(rc.values())
+        mac["VarLongerShare"] = f"{pct(rc.get('variant_longer', 0) / tot)}\\%"
+    mac["NPairsJudged"] = str(D.get("pairs_judged", ""))
+    mac["NGoldMedianLines"] = str(int(D["gold_changed_lines"]["50%"])) if "gold_changed_lines" in D else ""
+    mac["NGoldMedianFiles"] = str(int(D["gold_files"]["50%"])) if "gold_files" in D else ""
+    mac["NGoldMedianHunks"] = str(int(D["gold_hunks"]["50%"])) if "gold_hunks" in D else ""
     for k, v in S.get("extra_macros", {}).items():
         mac[k] = v
     with open(out / "numbers.tex", "w") as fo:
