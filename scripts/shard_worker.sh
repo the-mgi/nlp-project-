@@ -3,6 +3,7 @@
 #   scripts/shard_worker.sh setup
 #   scripts/shard_worker.sh build <start> <stop> <shard> <num_shards> <minutes> <name>
 #   scripts/shard_worker.sh judge <judge-name> <max-minutes>
+#   scripts/shard_worker.sh judge-cond <judge> <name> <condition> <mode> <think_tokens> <max_minutes> <limit>
 set -eu
 WORK=${WORK:-/opt/work}
 PY=$WORK/venv/bin/python
@@ -38,5 +39,19 @@ case "$cmd" in
         --out "results/raw/${name}__${cond}.jsonl" --max-minutes "$minutes"
     done
     echo "JUDGE DONE"
+    ;;
+  judge-cond)
+    # judge-cond <judge> <name-in-results> <condition> <mode> <think_tokens> <max_minutes> <limit>
+    judge=$1; name=$2; cond=$3; mode=$4; think=$5; minutes=$6; limit=$7
+    items="data/items/$cond.jsonl"
+    [ "$cond" = "pointwise" ] && items="data/items/diff_only.jsonl"
+    case "$cond" in think_*) items="data/items/${cond#think_}.jsonl";; esac
+    mkdir -p "$WORK/models"
+    f=$("$PY" -m repojudgebench.models "$judge" file)
+    [ -f "$WORK/models/$f" ] || curl -sSL --retry 4 -o "$WORK/models/$f" "$("$PY" -m repojudgebench.models "$judge")"
+    "$PY" -m repojudgebench.judge --model "$WORK/models/$f" --name "$name" --items "$items" \
+      --condition "${cond#think_}" --mode "$mode" --think-tokens "$think" \
+      --out "results/raw/${name}__${cond}.jsonl" --max-minutes "$minutes" --limit "$limit"
+    echo "JUDGE-COND DONE $name $cond"
     ;;
 esac

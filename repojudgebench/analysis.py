@@ -402,6 +402,13 @@ def dataset_stats(build: Path, meta: pd.DataFrame) -> dict:
         out["instances"] = int(meta["instance_id"].nunique())
         out["by_source"] = meta.groupby("source")["item_id"].count().to_dict()
         out["by_class"] = meta["defect_class"].value_counts().to_dict()
+        if "judged" in meta:
+            out["pairs_judged"] = int(meta["judged"].sum())
+            out["by_class_judged"] = meta[meta["judged"]]["defect_class"].value_counts().to_dict()
+            if "prompt_tokens" in meta:
+                pt_ = meta[meta["judged"]]["prompt_tokens"]
+                out["judged_prompt_tokens"] = {"median": float(pt_.median()), "max": float(pt_.max()),
+                                               "min": float(pt_.min())}
         out["by_operator"] = meta.groupby(["defect_class", "operator"]).size().rename("n").reset_index().to_dict("records")
         out["by_origin"] = meta["site_origin"].value_counts().to_dict()
         for k in ("gold_changed_lines", "gold_files", "gold_hunks"):
