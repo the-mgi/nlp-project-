@@ -274,8 +274,8 @@ def fig_classes(summary: dict, models: list[str], path: Path):
         for j, c in enumerate(classes):
             s = summary["by_class"].get(m, {}).get(c)
             if s:
-                M[i, j] = s["acc"]
-                N[j] = s["n"]
+                M[i, j] = s["acc_calibrated"]
+                N[j] = max(N[j], s["n"])
     fig, ax = plt.subplots(figsize=(3.4, 2.4))
     im = ax.imshow(M, cmap="RdYlGn", vmin=0.2, vmax=0.8, aspect="auto")
     for i in range(len(models)):
@@ -283,7 +283,8 @@ def fig_classes(summary: dict, models: list[str], path: Path):
             if not np.isnan(M[i, j]):
                 ax.text(j, i, f"{M[i, j]:.2f}", ha="center", va="center", fontsize=6)
     ax.set_xticks(range(len(classes)))
-    ax.set_xticklabels([f"{CLASS_SHORT[c]}\n(n={N[j]})" for j, c in enumerate(classes)], fontsize=6, rotation=20)
+    ax.set_xticklabels([CLASS_SHORT[c] for c in classes], fontsize=6, rotation=30, ha="right")
+    ax.set_title("Position-calibrated accuracy by defect class", fontsize=7)
     ax.set_yticks(range(len(models)))
     ax.set_yticklabels(models, fontsize=6.5)
     fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02)

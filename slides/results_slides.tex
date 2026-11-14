@@ -40,8 +40,8 @@
 \begin{frame}{Result 2: position bias and length bias}
 \begin{itemize}
   \item \SlidePositionText{}
-  \item After balanced position calibration, judges prefer the \alert{longer} patch in \PrefersLonger{} of unequal-length pairs.
-  \item The defective variant is longer in \VarLongerShare{} of judged pairs, so judges systematically pick the defect.
+  \item After balanced position calibration, the three smallest judges prefer the \alert{longer} patch in 77--87\% of unequal-length pairs (Llama-3.2-3B 64\%, the 4B judges 41\%).
+  \item The defective variant is longer in \VarLongerShare{} of judged pairs, so these judges systematically pick the defect.
   \item Benchmark artefact: a trivial ``pick the shorter patch'' rule scores \LengthHeurAcc{} --- future versions must length-match variants.
 \end{itemize}
 \end{frame}
@@ -69,9 +69,9 @@
 
 \begin{frame}{Key findings}
 \begin{enumerate}
-  \item Tests miss most review-relevant defects: \TestCatchRate{} caught overall, resource leaks rarely.
+  \item Tests miss most review-relevant defects: \TestCatchRate{} caught overall; resource leaks are rarely caught.
   \item \SlideFindingTwo{}
-  \item Verdicts are driven by \alert{position} and \alert{length}, not by the defect.
+  \item Verdicts are driven mostly by \alert{position} and \alert{length}, not by the defect.
   \item Cheap targeted static analysis (\StaticRelAcc{}) beats every judge's raw accuracy.
   \item Our benchmark itself has a length artefact --- a lesson for building judge benchmarks.
 \end{enumerate}

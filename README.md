@@ -12,6 +12,22 @@ the presentation slides are in [`slides/`](slides/).
 
 ---
 
+## Main results
+
+| | |
+|---|---|
+| Benchmark | 203 execution-verified (gold, defective) pairs from 133 real PRs (created 2025-01-01 to 2025-09-02) in 90 Python repositories; 155 judged |
+| Tests vs. injected defects | the PRs' own tests catch only 40.5% of candidate defects (resource leaks: 15.4%) |
+| Raw pairwise accuracy | 50.0–55.6% on the CodeJudgeBench control, 42.4–51.1% on RepoJudgeBench (6 judges, 1.5–4B) |
+| Position bias | flip rates 71–100%; verdicts follow the presentation slot |
+| After position calibration | three smallest judges significantly *below* chance on RepoJudgeBench (24.3–31.6%); Qwen3-4B 66.7%, Gemma-3-4B 59.1% |
+| Length bias | small judges prefer the longer (usually defective) patch in 77–87% of unequal pairs |
+| Diff size | no measurable effect (all logistic coefficients' CIs include 0) |
+| Mitigation | retrieved context / thinking: +16 to +22 calibrated points for Qwen3-1.7B, still not above chance |
+| Baselines | targeted static analysis 68.4%; shorter-patch heuristic 80.0% (a length artefact of the current benchmark) |
+
+All numbers are generated from `results/summary.json` (see `paper/generated/`).
+
 ## What this repository contains
 
 | Path | Content |
@@ -24,7 +40,7 @@ the presentation slides are in [`slides/`](slides/).
 | `repojudgebench/static_baseline.py` | Ruff / Bandit static-analysis baseline |
 | `repojudgebench/analysis.py` | Bootstrap CIs, position bias, self-consistency, logistic scaling model, per-class breakdown, context gain, figures |
 | `scripts/` | Source download (pinned revisions), distributed worker script, report/table generation, annotation sheet + Cohen's kappa |
-| `data/build/`, `data/build_shards/` | Raw construction logs: every processed task, every tested candidate, admitted and rejected variants, retrieved context |
+| `data/build/`, `data/build_shards/` (shards 1-3) | Raw construction logs: every processed task, every tested candidate, admitted and rejected variants, retrieved context |
 | `data/items/` | The benchmark as judge items (`meta.jsonl` holds per-pair metadata) |
 | `results/raw/` | Raw verdict logs for every judge, condition and presentation order |
 | `results/summary.json`, `results/tables/`, `results/figures/` | Aggregated results used in the paper |
@@ -70,9 +86,7 @@ python -m repojudgebench.judge --model /opt/work/models/qwen2.5-coder-1.5b-instr
 
 # 5. baselines, analysis, paper tables
 python -m repojudgebench.static_baseline --build data/build/instances.jsonl data/build_shards/*/instances.jsonl
-python -m repojudgebench.analysis --out results
-python scripts/make_report.py results/summary.json paper/generated
-cd paper && latexmk -pdf main.tex
+bash scripts/finalize.sh      # analysis -> tables/figures -> paper/main.pdf and slides/slides.pdf
 ```
 
 Unit tests: `python -m pytest tests`.

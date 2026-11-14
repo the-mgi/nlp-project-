@@ -207,9 +207,9 @@ def main():
         bc = S["by_class"].get(m, {})
         if not bc:
             continue
-        rows.append(" & ".join([NICE.get(m, m)] + [pct(bc[c]["acc"]) if c in bc else "--" for c in cls_present]) + " \\\\")
+        rows.append(" & ".join([NICE.get(m, m)] + [pct(bc[c]["acc_calibrated"]) if c in bc else "--" for c in cls_present]) + " \\\\")
     rows.append("\\midrule")
-    rows.append(" & ".join(["All judges"] + [f"{pct(allj[c]['acc'])} {ci(allj[c]['ci'])}" for c in cls_present]) + " \\\\")
+    rows.append(" & ".join(["All judges"] + [f"{pct(allj[c]['acc_calibrated'])} {ci(allj[c]['acc_calibrated_ci'])}" for c in cls_present]) + " \\\\")
     rows.append(" & ".join(["Pairs ($n$)"] + [str(S['dataset']['by_class_judged'].get(c, 0)) if 'by_class_judged' in S['dataset'] else '' for c in cls_present]) + " \\\\")
     st = S.get("static", {})
     if st:
@@ -218,8 +218,9 @@ def main():
             rows.append(" & ".join([lab] + [pct(bc[c]["acc"]) if c in bc else "--" for c in cls_present]) + " \\\\")
     colspec = "l" + "r" * len(cls_present)
     (out / "tab_classes.tex").write_text(
-        "\\begin{table*}[t]\n\\caption{Accuracy (\\%) by defect class on \\RJB{} (diff-only). "
-        "The pooled row averages pairs over all judges and reports a bootstrap CI.}\n"
+        "\\begin{table*}[t]\n\\caption{Position-calibrated accuracy (\\%) by defect class on \\RJB{} (diff-only). "
+        "The pooled row averages judge--pair combinations over all judges and reports a bootstrap CI; "
+        "the static-analysis rows give the baseline's pairwise accuracy.}\n"
         "\\label{tab:classes}\n\\centering\\footnotesize\n\\begin{tabular}{@{}" + colspec + "@{}}\n\\toprule\n"
         + head + " \\\\\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
 
@@ -253,11 +254,11 @@ def main():
                         + f" & {d['n']} \\\\")
     if rows:
         (out / "tab_context.tex").write_text(
-            "\\begin{table}[t]\n\\caption{Mitigation (O6) and thinking: accuracy (\\%) of each condition "
+            "\\begin{table*}[t]\n\\caption{Mitigation (O6) and thinking: accuracy (\\%) of each condition "
             "and paired difference to the diff-only prompt on the same pairs (raw and after balanced position calibration).}\n\\label{tab:context}\n"
             "\\centering\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n\\begin{tabular}{@{}llrrrr@{}}\n\\toprule\n"
             "Judge & Condition & Acc. & $\\Delta$ & $\\Delta$ calib. & $n$ \\\\\n\\midrule\n" + "\n".join(rows) +
-            "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
+            "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
 
     # ---- length-bias table ----------------------------------------------------
     LB = S.get("length_bias", {})
@@ -278,7 +279,7 @@ def main():
             "whether the defective variant's diff has more, the same or fewer changed lines than the gold patch "
             f"(judged pairs: {rc.get('variant_longer', 0)} / {rc.get('same_length', 0)} / {rc.get('variant_shorter', 0)}); "
             "$n$ in parentheses. Last column: share of pairs of unequal length in which the judge prefers the longer patch.}\n"
-            "\\label{tab:length}\n\\centering\\footnotesize\n\\begin{tabular}{@{}lrrrl@{}}\n\\toprule\n"
+            "\\label{tab:length}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{2.5pt}\n\\begin{tabular}{@{}lrrrl@{}}\n\\toprule\n"
             "Judge & Var.\\ longer & Same & Var.\\ shorter & Prefers longer \\\\\n\\midrule\n" + "\n".join(rows) +
             "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 
@@ -293,9 +294,9 @@ def main():
     for m, p in S.get("pointwise", {}).items():
         rows.append(f"Point-wise, {NICE.get(m, m)} & {pct(p['acc'])} & {ci(p['ci'])}; greedy ties {pct(p.get('greedy_tie_rate'))}\\% \\\\")
     (out / "tab_baselines.tex").write_text(
-        "\\begin{table}[t]\n\\caption{Non-LLM baselines and point-wise judging on \\RJB{} (accuracy, \\%).}\n"
+        "\\begin{table*}[t]\n\\caption{Non-LLM baselines and point-wise judging on \\RJB{} (accuracy, \\%).}\n"
         "\\label{tab:baselines}\n\\centering\\footnotesize\n\\begin{tabular}{@{}lrl@{}}\n\\toprule\n"
-        "Method & Acc. & Notes \\\\\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
+        "Method & Acc. & Notes \\\\\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
     print("wrote", sorted(p.name for p in out.iterdir()))
 
 
