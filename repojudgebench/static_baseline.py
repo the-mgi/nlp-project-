@@ -92,15 +92,12 @@ def _flags(mine: Counter, other: Counter, relevant: bool) -> bool:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build", default="data/build/instances.jsonl")
+    ap.add_argument("--build", nargs="+", default=["data/build/instances.jsonl"])
     ap.add_argument("--out", default="results/raw/static_baseline.jsonl")
     args = ap.parse_args()
     rows = []
-    for line in open(args.build):
-        try:
-            r = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    from .make_items import dedupe, load_build
+    for r in dedupe([r for b in args.build for r in load_build(b)]):
         if r.get("status") != "ok":
             continue
         files = (r.get("context") or {}).get("files", {})

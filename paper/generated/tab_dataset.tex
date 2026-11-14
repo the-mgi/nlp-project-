@@ -1,0 +1,19 @@
+\begin{table}[t]
+\caption{Defect injection and execution-based admission. \emph{Tested}: candidates run against the PR's tests; \emph{caught}: candidates that broke at least one gold-passing test; \emph{admitted}: pairs in \RJB{}.}
+\label{tab:dataset}
+\centering\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Class & Tested & Caught & Caught (\%) & Admitted \\
+\midrule
+N+1 query & 2 & 0 & 0.0 & 2 \\
+Race / concurrency & 4 & 0 & 0.0 & 4 \\
+Authorisation & 3 & 3 & 100.0 & 0 \\
+Unsafe migration & 0 & 0 & -- & 0 \\
+Resource leak & 0 & 0 & -- & 0 \\
+Error swallowing & 13 & 4 & 30.8 & 9 \\
+\midrule
+Total & 22 & 7 & 31.8 & 15 \\
+\bottomrule
+\end{tabular}
+\end{table}

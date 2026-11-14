@@ -1,0 +1,15 @@
+\begin{table}[t]
+\caption{Non-LLM baselines and point-wise judging on \RJB{} (accuracy, \%).}
+\label{tab:baselines}
+\centering\footnotesize
+\begin{tabular}{@{}lrl@{}}
+\toprule
+Method & Acc. & Notes \\
+\midrule
+Random & 50.0 & -- \\
+Execution oracle (PR tests) & 0.0 & by construction \\
+Static analysis, relevant rules & 60.0 & [50, 70]; flags variant 20.0\%, gold 0.0\% \\
+Static analysis, all rules & 43.3 & [23, 63]; flags variant 33.3\%, gold 46.7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
