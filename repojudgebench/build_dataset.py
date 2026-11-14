@@ -165,6 +165,18 @@ def staged_diff(c: Container, paths: list[str] | None = None) -> str:
 _RESULT_RE = re.compile(r"^(PASSED|FAILED|ERROR|XFAIL|XPASS|SKIPPED)\s+(\S+)", re.M)
 
 
+def pick_test_cmd(cmds: list[str]) -> str:
+    """Pick the pytest invocation among the instance's test commands.  ``uv run``
+    must not try to re-sync the environment (the containers have no network
+    access to package indexes), so ``--no-sync`` is added."""
+    cmd = next((c for c in cmds if "pytest" in c),
+               next((c for c in cmds if c.startswith("hatch run")), "python -m pytest -rA"))
+    cmd = cmd.split("&&")[-1].strip() if "&&" in cmd else cmd
+    if cmd.startswith("uv run ") and "--no-sync" not in cmd:
+        cmd = "uv run --no-sync " + cmd[len("uv run "):]
+    return cmd
+
+
 def build_test_cmd(test_cmd: str, test_files: list[str]) -> str:
     toks = shlex.split(test_cmd)
     try:
@@ -172,6 +184,10 @@ def build_test_cmd(test_cmd: str, test_files: list[str]) -> str:
     except StopIteration:
         i = len(toks) - 1
     head, rest = toks[: i + 1], toks[i + 1:]
+    if toks and toks[0] == "hatch":
+        head, rest = toks, []
+    elif not any(t.endswith("pytest") for t in head):
+        head, rest = ["python", "-m", "pytest"], []
     keep, skip = [], False
     for k, t in enumerate(rest):
         if skip:
@@ -366,7 +382,7 @@ def process_instance(row: dict, out_dir: Path, log) -> dict:
         if not exist:
             rec["status"] = "no_test_files"
             return rec
-        cmd = build_test_cmd(list(row["test_cmds"])[0], exist)
+        cmd = build_test_cmd(pick_test_cmd(list(row["test_cmds"])), exist)
         rec["test_cmd"] = cmd
         gold_res, gold_log = run_tests(c, cmd)
         f2p = [t for t in list(row["FAIL_TO_PASS"])]

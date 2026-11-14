@@ -1,0 +1,57 @@
+\section{Introduction}
+\label{sec:intro}
+
+Large language models (LLMs) are increasingly used as \emph{judges} of other
+models' code: they rank candidate patches produced by coding agents, filter
+synthetic training data, act as reward models, and review pull requests.  The
+appeal is that a judge does not need an execution oracle.  This matters
+because the oracle that the field relies on, the repository's test suite, is
+known to be weak exactly where repository-level evaluation happens.  In an
+audit of SWE-bench~\cite{jimenez2024swebench}, Aleithan et
+al.~\cite{aleithan2024swebenchplus} found that 32.67\% of the patches accepted
+for SWE-Agent+GPT-4 involved solution leakage and a further 31.08\% passed only
+because the tests were too weak to detect an incorrect, incomplete or misplaced
+fix; after filtering these, the resolution rate fell from 12.47\% to 3.97\%.
+
+Current judge benchmarks do not measure judges in this regime.
+\CJB{}~\cite{jiang2025codejudgebench}, the base paper of this project, contains
+5{,}352 response pairs built from 1{,}055 LiveCodeBench-v6 problems published
+between May~2023 and April~2025, for code generation, code repair and unit-test
+generation.  Every instance is a single, self-contained program whose
+correctness is decided by hidden tests.  Even in this clean setting the paper
+reports that judges are unstable: swapping the order of the two candidates
+changes pairwise accuracy by up to 14\%, and accuracy depends on which model
+wrote the code under review.
+
+Code review in real repositories is harder in three ways.  First, the unit of
+evaluation is a multi-file diff situated in a codebase the judge cannot see.
+Second, many defects that reviewers reject---N+1 queries, races, silently
+swallowed errors, leaked resources, authorisation and migration regressions---do
+not break any test.  Third, diffs are long, and long inputs are known to hurt
+LLMs~\cite{liu2024lost}.  We therefore ask: \emph{does LLM-as-a-judge
+reliability survive the move from self-contained functions to
+repository-level, test-passing code changes?}
+
+\textbf{Contributions.}
+\begin{enumerate}
+\item \textbf{\RJB{}}, a contamination-resistant benchmark of
+\NPairs{} (gold patch, defective variant) pairs from \NInstances{} real pull
+requests created after 1~January~2025 in \NRepos{} Python repositories.  Every
+variant is produced by a template-guided AST mutation of the real gold patch and
+is \emph{admitted only if it keeps every test that passes with the gold patch
+green} inside the task's published Docker environment, so ``passes CI but is
+wrong'' is a guaranteed property of the data rather than an accident.
+\item A \textbf{six-class defect taxonomy} of review-detectable, test-invisible
+defects with executable injection operators, and statistics on how often the
+existing tests catch each class (\TestCatchRate{} of the tested candidates).
+\item An \textbf{evaluation of \NJudges{} open-weight judges} under the
+\CJB{} pairwise protocol on \RJB{} and on a \CJB{} control subset, with 95\%
+bootstrap confidence intervals, position-bias and self-consistency measurements,
+a logistic model of accuracy versus diff size, file count and hunk count, a
+per-class error profile, a point-wise judging condition, a static-analysis
+baseline, and a context-retrieval mitigation with a budget ablation.
+\item \textbf{Released artefacts}: the injection and verification harness, all
+prompts, the dataset and the raw verdict logs.
+\end{enumerate}
+
+The main finding is negative and, we argue, important: \MainFinding{}

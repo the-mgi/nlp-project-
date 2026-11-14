@@ -1,0 +1,48 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage{cite}
+
+\input{generated/numbers.tex}
+
+\newcommand{\RJB}{RepoJudgeBench}
+\newcommand{\CJB}{CodeJudgeBench}
+
+\begin{document}
+
+\title{RepoJudgeBench: Does LLM-as-a-Judge Reliability Survive the Move from Self-Contained Functions to Repository-Level, Test-Passing Code Changes?}
+
+\author{\IEEEauthorblockN{Muhammad Usama}
+\IEEEauthorblockA{Roll No.\ 25I-8007\\
+Natural Language Processing --- Semester Research Project}}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract.tex}
+\end{abstract}
+
+\begin{IEEEkeywords}
+LLM-as-a-judge, code review, benchmark, repository-level code, mutation testing, position bias
+\end{IEEEkeywords}
+
+\input{sections/introduction.tex}
+\input{sections/related.tex}
+\input{sections/method.tex}
+\input{sections/experiments.tex}
+\input{sections/results.tex}
+\input{sections/conclusion.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
