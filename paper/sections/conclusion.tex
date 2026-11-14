@@ -1,2 +1,28 @@
 \section{Conclusion}
-Placeholder.
+\label{sec:conclusion}
+
+We introduced \RJB{}, a benchmark of \NPairs{} execution-verified
+(gold patch, defective variant) pairs built from real pull requests created
+after 1~January~2025, in which every defective variant keeps all of the PR's
+gold-passing tests green.  Constructing it showed that the PR's tests catch only
+\TestCatchRate{} of review-relevant injected defects, so a test-based oracle
+cannot separate the two patches by construction.
+
+\ConclusionJudges{}
+
+Three lessons follow.  First, the reliability problems that \CJB{} reports for
+single-file code---sensitivity to presentation order---do not disappear at
+repository level; for small open judges they dominate the verdict.  Second,
+judges must be audited for \emph{length} preferences: on our pairs the
+defective patch is usually the longer one, and judges systematically prefer it,
+while a trivial shorter-patch rule scores \LengthHeurAcc{}.  This is also a
+lesson for benchmark builders, ourselves included: the next version of
+\RJB{} should length-match each variant to its gold patch.  Third, cheap,
+targeted static analysis (\StaticRelAcc{}) is a strong baseline that any
+execution-free judge for code review should be required to beat.
+
+\textbf{Future work.}  Length-matched variants and naturally occurring
+defective PRs; Django- and SQLAlchemy-heavy repositories to populate the N+1
+and migration classes; per-instance witness tests; the planned two-annotator
+validation; and frontier (closed and large open) judges, for which our harness
+only needs an API backend.
