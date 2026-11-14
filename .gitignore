@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+models/
+*.gguf
+work/
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.bbl
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
