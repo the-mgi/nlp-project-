@@ -88,6 +88,16 @@ def cluster_boot_ci(values: np.ndarray, clusters: np.ndarray, b: int = B,
     return (float(np.percentile(stats, 2.5)), float(np.percentile(stats, 97.5)))
 
 
+def _boot_means(values: np.ndarray, clusters: np.ndarray, seed_offset: int = 0) -> np.ndarray:
+    """Bootstrap distribution (B draws) of the mean, resampling clusters."""
+    codes, uniq = pd.factorize(pd.Series(clusters))
+    k = len(uniq)
+    sums = np.bincount(codes, weights=np.asarray(values, float), minlength=k)
+    cnts = np.bincount(codes, minlength=k).astype(float)
+    idx = np.random.default_rng(RNG_SEED + seed_offset).integers(0, k, size=(B, k))
+    return sums[idx].sum(axis=1) / cnts[idx].sum(axis=1)
+
+
 def _ci(values, pt: pd.DataFrame | None = None):
     if pt is not None and "cluster" in pt:
         return cluster_boot_ci(values, pt["cluster"].to_numpy())
@@ -321,10 +331,10 @@ def main():
     for m in models:
         bm = summary["by_model"][m]
         if "cjb_control" in bm and "diff_only" in bm:
-            a = pt[(pt.model == m) & (pt.condition == "cjb_control")]["acc"].to_numpy()
-            b = pt[(pt.model == m) & (pt.condition == "diff_only")]["acc"].to_numpy()
-            rng = np.random.default_rng(RNG_SEED)
-            diffs = [rng.choice(a, len(a)).mean() - rng.choice(b, len(b)).mean() for _ in range(B)]
+            ga = pt[(pt.model == m) & (pt.condition == "cjb_control")]
+            gb = pt[(pt.model == m) & (pt.condition == "diff_only")]
+            a, b = ga["acc"].to_numpy(), gb["acc"].to_numpy()
+            diffs = _boot_means(a, ga["cluster"].to_numpy(), 1) - _boot_means(b, gb["cluster"].to_numpy(), 2)
             summary["regime_gap"][m] = {"cjb": float(a.mean()), "repo": float(b.mean()),
                                         "gap": float(a.mean() - b.mean()),
                                         "ci": [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]}
