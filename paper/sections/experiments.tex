@@ -35,9 +35,8 @@ Gemma-3-4B~\cite{gemma2025gemma3} & 4B & Q4\_0 & general \\
 \textbf{Evaluation sets.}  \RJB{}: all admitted, non-leaking pairs whose
 diff-only prompt fits in \MaxPromptTokens{} tokens (\NEvalPairs{} pairs).
 \CJB{} control: \NCJBPairs{} pairs, 15 per task (code generation, code repair,
-unit-test generation), sampled with a fixed seed from the responses of
-a single generator model (the one with the shortest responses) among pairs whose
-question and two responses total at most 6{,}000 characters.  The control uses
+unit-test generation), sampled with a fixed seed from the responses of a single generator model of the
+dataset (the one with the shortest responses) among pairs whose question and two responses total at most 6{,}000 characters.  The control uses
 the dataset card's prompt filling (question as user prompt, the two responses as
 answers).  Control and \RJB{} prompts are therefore of comparable length, so the
 comparison isolates the regime rather than prompt length.

@@ -102,7 +102,6 @@
 12:50:57 Textualize__textual-5863: ok variants=2 rejected=0 50.4s
 12:51:28 sissbruecker__linkding-971: no_mutation_site variants=0 rejected=0 32.9s
 12:53:08 certbot__certbot-10374: ok variants=1 rejected=2 79.0s
-12:53:58 lastmile-ai__mcp-agent-367: ok variants=5 rejected=0 149.0s
 12:56:22 deepset-ai__haystack-8838: error variants=0 rejected=0 418.2s
 12:57:19 stanfordnlp__dspy-8432: ok variants=2 rejected=0 233.9s
 12:57:26 Archmonger__django-dbbackup-601: ok variants=3 rejected=1 57.8s

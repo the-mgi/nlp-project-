@@ -14,7 +14,6 @@
 11:42:52 matplotlib__matplotlib-29696: all_caught_by_tests variants=0 rejected=1 330.3s
 11:47:10 albumentations-team__albumentations-2520: error variants=0 rejected=0 258.1s
 11:47:36 deepset-ai__haystack-9649: error variants=0 rejected=1 319.9s
-11:48:41 simonw__llm-1048: ok variants=3 rejected=0 58.7s
 11:48:52 falconry__falcon-2498: ok variants=1 rejected=1 94.9s
 11:48:58 canonical__charmcraft-2084: gold_tests_not_green variants=0 rejected=0 456.6s
 11:49:00 conan-io__conan-17577: error variants=0 rejected=0 2.0s

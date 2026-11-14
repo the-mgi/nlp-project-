@@ -9,10 +9,8 @@
 11:36:14 deepset-ai__haystack-8943: error variants=0 rejected=0 349.5s
 11:36:54 patroni__patroni-3338: ok variants=1 rejected=0 59.6s
 11:37:16 astropy__astropy-18005: all_caught_by_tests variants=0 rejected=1 89.6s
-11:37:24 simonw__llm-1149: ok variants=2 rejected=0 53.0s
 11:37:24 sooperset__mcp-atlassian-407: gold_tests_not_green variants=0 rejected=0 15.5s
 11:38:40 python-control__python-control-1096: ok variants=1 rejected=0 69.8s
-11:39:03 stanfordnlp__dspy-8718: ok variants=1 rejected=0 92.9s
 11:39:18 PyPSA__linopy-412: ok variants=1 rejected=0 101.6s
 11:40:28 jlowin__fastmcp-317: gold_tests_not_green variants=0 rejected=0 60.9s
 11:41:11 probabl-ai__skore-1114: gold_tests_not_green variants=0 rejected=0 105.7s

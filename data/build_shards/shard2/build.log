@@ -1,7 +1,6 @@
 11:31:15 dynaconf__dynaconf-1249: ok variants=2 rejected=0 41.5s
 11:32:48 conan-io__conan-18518: ok variants=1 rejected=1 83.5s
 11:34:55 probabl-ai__skore-1085: ok variants=1 rejected=0 108.2s
-11:35:34 hgrecco__pint-2194: ok variants=1 rejected=0 30.4s
 11:36:23 aws-cloudformation__cfn-lint-4162: ok variants=2 rejected=0 37.6s
 11:36:28 agronholm__sqlacodegen-371: error variants=0 rejected=0 4.3s
 11:37:28 huggingface__smolagents-285: ok variants=1 rejected=1 388.0s
@@ -27,7 +26,6 @@
 11:50:57 matplotlib__matplotlib-29719: error variants=0 rejected=0 2.7s
 11:53:20 matplotlib__matplotlib-29892: ok variants=1 rejected=0 111.3s
 11:54:47 deepset-ai__haystack-9226: ok variants=1 rejected=1 272.8s
-11:56:23 deepset-ai__haystack-9682: all_caught_by_tests variants=0 rejected=5 304.0s
 11:57:03 celery__kombu-2300: ok variants=2 rejected=0 122.7s
 11:57:05 astropy__astropy-17800: error variants=0 rejected=0 2.1s
 11:57:07 MechanicalSoup__MechanicalSoup-455: error variants=0 rejected=0 2.1s
@@ -55,7 +53,6 @@
 12:12:27 QuantEcon__QuantEcon.py-797: all_caught_by_tests variants=0 rejected=4 65.1s
 12:14:05 matplotlib__matplotlib-30223: ok variants=1 rejected=0 78.4s
 12:15:16 unionai-oss__pandera-1936: ok variants=1 rejected=0 192.9s
-12:16:23 arrow-py__arrow-1217: ok variants=1 rejected=2 64.6s
 12:18:31 sdv-dev__SDV-2634: ok variants=1 rejected=0 243.0s
 12:19:12 run-llama__llama_deploy-457: gold_tests_not_green variants=0 rejected=0 36.2s
 12:19:59 deepset-ai__haystack-8879: error variants=0 rejected=0 216.4s

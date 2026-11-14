@@ -35,9 +35,19 @@ def main():
     test = [get(f"{HF}/nebius/SWE-rebench/resolve/{REV['nebius/SWE-rebench']}/data/test-0000{i}-of-00002.parquet",
                 f"{d}/rebench/test-0000{i}-of-00002.parquet") for i in range(2)]
     pd.concat([pd.read_parquet(f) for f in test]).to_pickle(f"{d}/rebench/rebench_test.pkl")
+    # CodeJudgeBench control data: every generator split that exists for all three tasks
+    import json
+    api = f"https://huggingface.co/api/datasets/mattymchen/codejudgebench/tree/{REV['mattymchen/codejudgebench']}"
+    splits = {}
     for task in ("codegen", "coderepair", "testgen"):
-        get(f"{HF}/mattymchen/codejudgebench/resolve/{REV['mattymchen/codejudgebench']}/{task}/shortest_generator-00000-of-00001.parquet",
-            f"{d}/cjb/{task}/shortest_generator.parquet")
+        with urllib.request.urlopen(f"{api}/{task}") as fh:
+            names = [e["path"].split("/")[-1] for e in json.load(fh) if e["path"].endswith(".parquet")]
+        splits[task] = {n.split("-00000-of-")[0]: n for n in names}
+    common = set.intersection(*(set(v) for v in splits.values()))
+    for task in splits:
+        for gen in sorted(common):
+            get(f"{HF}/mattymchen/codejudgebench/resolve/{REV['mattymchen/codejudgebench']}/{task}/{splits[task][gen]}",
+                f"{d}/cjb/{task}/{gen}.parquet")
     print("sources ready in", d)
 
 

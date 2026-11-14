@@ -51,6 +51,10 @@ def load_verdicts(raw_dir: Path) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     if df.empty:
         return df
+    # control ids: drop a legacy generator component (cjb::<task>::<gen>::<qid>::<row>)
+    df["item_id"] = df["item_id"].map(
+        lambda i: "::".join(i.split("::")[:2] + i.split("::")[3:])
+        if i.startswith("cjb::") and len(i.split("::")) == 5 else i)
     if "skipped" in df:
         df = df[df["skipped"].isna()]
     return df
@@ -307,6 +311,10 @@ def main():
     meta = pd.DataFrame(load_jsonl(Path(args.meta)))
     v = load_verdicts(Path(args.raw))
     summary: dict = {"dataset": dataset_stats([Path(b) for b in args.build], meta)}
+    if not v.empty and not meta.empty:
+        # only pairs that are part of the released benchmark (plus the control set)
+        keep = set(meta["item_id"])
+        v = v[v["item_id"].str.startswith("cjb::") | v["item_id"].isin(keep)]
     pt = pair_table(v) if not v.empty else pd.DataFrame()
     models = args.models or sorted(pt["model"].unique()) if not pt.empty else []
     models = [m for m in models if m in set(pt["model"])] if not pt.empty else []
