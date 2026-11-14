@@ -1,0 +1,31 @@
+\subsection{The benchmark (O1)}
+\label{sec:res-dataset}
+
+We processed \NProcessed{} screened tasks.  Of these, \NInstances{} yielded at
+least one admitted variant; the others had no eligible mutation site in the
+touched region (\NStatusNoSite{}), no green gold run in the published
+environment (\NStatusNotGreen{}), every candidate caught by the tests
+(\NStatusCaught{}), or an infrastructure failure such as an image that did not
+fit on disk (\NStatusError{}).  The released benchmark has \NPairs{} pairs from
+\NRepos{} repositories (\NFromLive{} from SWE-bench-Live, \NFromRebench{} from
+SWE-rebench), all created between \DateMin{} and \DateMax{}.  The median gold
+patch changes \NGoldMedianLines{} lines in \NGoldMedianFiles{} files and
+\NGoldMedianHunks{} hunks.  \NOriginContext{} variants mutate pre-existing code
+inside a function the PR modifies and \NOriginAdded{} mutate code written by the
+PR itself.  \NLeakPairs{} pairs are flagged for solution leakage and
+\NTooLong{} exceed the judges' prompt budget, leaving \NPairsJudged{} judged
+pairs (median prompt \NJudgedMedianTokens{} tokens).
+
+\Cref{tab:dataset} shows how often the PR's own tests catch a candidate.
+Overall, \TestCatchRate{} of the tested candidates break at least one
+gold-passing test.  The rate depends strongly on the class: deleted
+authorisation guards (\CatchAuth{}) and error-handling changes (\CatchSES{})
+are caught most often, injected races less often (\CatchRace{}), and resource
+leaks rarely (\CatchRL{}).  This is consistent with the premise motivated by
+SWE-Bench+: a large share of review-relevant defects is invisible to the
+PR's tests.  The class distribution is, however, very unbalanced: N+1 query
+sites are rare and no unsafe-migration candidate was found at all, because
+issue-resolution PRs rarely touch ORM queries or schema migrations; the
+per-class analysis is therefore limited to the classes with enough pairs.
+
+\input{generated/tab_dataset.tex}

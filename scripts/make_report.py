@@ -62,6 +62,26 @@ def main():
         tot = sum(rc.values())
         mac["VarLongerShare"] = f"{pct(rc.get('variant_longer', 0) / tot)}\\%"
     mac["NPairsJudged"] = str(D.get("pairs_judged", ""))
+    stt = D.get("status", {})
+    mac["NStatusNoSite"] = str(stt.get("no_mutation_site", 0))
+    mac["NStatusNotGreen"] = str(stt.get("gold_tests_not_green", 0))
+    mac["NStatusCaught"] = str(stt.get("all_caught_by_tests", 0))
+    mac["NStatusError"] = str(stt.get("error", 0) + stt.get("timeout", 0) + stt.get("crash", 0))
+    mac["NFromLive"] = str(D.get("by_source", {}).get("SWE-bench-Live", 0))
+    mac["NFromRebench"] = str(D.get("by_source", {}).get("SWE-rebench", 0))
+    mac["DateMin"] = str(D.get("created_at_min", ""))[:10]
+    mac["DateMax"] = str(D.get("created_at_max", ""))[:10]
+    mac["NOriginContext"] = str(D.get("by_origin", {}).get("context", 0))
+    mac["NOriginAdded"] = str(D.get("by_origin", {}).get("added", 0))
+    mac["NLeakPairs"] = str(D.get("pairs", 0) - D.get("pairs_no_leak", 0))
+    mac["NTooLong"] = str(D.get("pairs_no_leak", 0) - D.get("pairs_judged", 0))
+    mac["NJudgedMedianTokens"] = f"{int(D['judged_prompt_tokens']['median']):,}".replace(",", "{,}") \
+        if "judged_prompt_tokens" in D else ""
+    for key, cls in (("CatchAuth", "authorization_regression"), ("CatchSES", "silent_error_swallowing"),
+                     ("CatchRace", "race_condition"), ("CatchRL", "resource_leak")):
+        t = D["candidates_tested"].get(cls, 0)
+        k = D["caught_by_tests"].get(cls, 0)
+        mac[key] = f"{pct(k / t) if t else '--'}\\%, {k}/{t}"
     mac["NGoldMedianLines"] = str(int(D["gold_changed_lines"]["50%"])) if "gold_changed_lines" in D else ""
     mac["NGoldMedianFiles"] = str(int(D["gold_files"]["50%"])) if "gold_files" in D else ""
     mac["NGoldMedianHunks"] = str(int(D["gold_hunks"]["50%"])) if "gold_hunks" in D else ""
