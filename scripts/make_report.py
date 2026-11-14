@@ -227,14 +227,18 @@ def main():
                 continue
             base = S["by_model"][m].get("diff_only", {})
             other = S["by_model"][m].get(cond, {})
+            dc = d.get("calibrated", {})
+            sgn = lambda x: "+" if x >= 0 else ""
             rows.append(f"{NICE.get(m, m)} & {COND.get(cond, cond)} & {pct(other.get('acc'))} & "
-                        f"{'+' if d['diff'] >= 0 else ''}{pct(d['diff'])} {ci(d['ci'])} & {d['n']} \\\\")
+                        f"{sgn(d['diff'])}{pct(d['diff'])} {ci(d['ci'])} & "
+                        + (f"{sgn(dc['diff'])}{pct(dc['diff'])} {ci(dc['ci'])}" if dc else "--")
+                        + f" & {d['n']} \\\\")
     if rows:
         (out / "tab_context.tex").write_text(
             "\\begin{table}[t]\n\\caption{Mitigation (O6) and thinking: accuracy (\\%) of each condition "
-            "and paired difference to the diff-only prompt on the same pairs.}\n\\label{tab:context}\n"
-            "\\centering\\footnotesize\n\\begin{tabular}{@{}llrrr@{}}\n\\toprule\n"
-            "Judge & Condition & Acc. & $\\Delta$ vs diff-only & $n$ \\\\\n\\midrule\n" + "\n".join(rows) +
+            "and paired difference to the diff-only prompt on the same pairs (raw and after balanced position calibration).}\n\\label{tab:context}\n"
+            "\\centering\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n\\begin{tabular}{@{}llrrrr@{}}\n\\toprule\n"
+            "Judge & Condition & Acc. & $\\Delta$ & $\\Delta$ calib. & $n$ \\\\\n\\midrule\n" + "\n".join(rows) +
             "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 
     # ---- length-bias table ----------------------------------------------------

@@ -1,0 +1,90 @@
+\subsection{Judge accuracy in the two regimes (O2)}
+\label{sec:res-acc}
+
+\Cref{tab:main} and \cref{fig:regimes} report pairwise accuracy.  With the
+\CJB{} protocol (mean of both presentation orders), every judge is close to the
+50\% random baseline in \emph{both} regimes: \AccRangeC{} on the single-file
+control subset and \AccRangeR{} on \RJB{}.  The confidence intervals of all
+judges include or lie below 50\% on \RJB{}.  For the small judges this is
+consistent with the base paper, which reports that even large non-thinking
+judges stay below 60\% on \CJB{}.  The regime comparison is therefore
+dominated by a floor effect for raw accuracy; it becomes informative only after
+removing position bias, below.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results/figures/regimes.pdf}
+\caption{Pairwise accuracy of each judge on the \CJB{} control subset and on
+\RJB{} (95\% bootstrap CIs). The dashed line is the random baseline.}
+\label{fig:regimes}
+\end{figure}
+
+\input{generated/tab_main.tex}
+
+\subsection{Position bias and self-consistency (O5)}
+\label{sec:res-robust}
+
+\Cref{tab:robust} shows why raw accuracy is uninformative: the verdicts are
+dominated by the \emph{slot} in which a patch is shown.  \RobustText{}
+Self-consistency (SC) is high exactly where a judge is most position-biased, so
+consistency across samples is not evidence of reliability.
+
+\input{generated/tab_robust.tex}
+
+\textbf{Balanced position calibration.}  Averaging the probability assigned to
+the gold patch over both orders removes a constant slot preference
+(\cref{tab:main}, ``Calibrated'').  \CalibText{}
+
+\subsection{Length bias}
+\label{sec:res-length}
+
+The variant differs from the gold patch by a single mutation, but the mutation
+changes the size of the diff: in \VarLongerShare{} of judged pairs the
+defective variant's diff is longer (e.g.\ unwrapping a \texttt{with} block
+re-indents its body).  \Cref{tab:length} shows that judge preferences follow
+this length difference.  \LengthText{}  The same artefact makes the benchmark
+exploitable: choosing the patch with fewer changed lines scores
+\LengthHeurAcc{} (\cref{tab:baselines}).  We report this as a limitation of the
+current construction and as a warning for execution-free judges, which can
+look competent on benchmarks whose negatives are systematically longer or
+shorter than the positives.
+
+\input{generated/tab_length.tex}
+
+\subsection{Degradation with diff size (O3)}
+\label{sec:res-scaling}
+
+\Cref{fig:scaling} bins accuracy by the size of the gold patch and
+\cref{tab:scaling} reports the pooled logistic regression.  \ScalingText{}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results/figures/scaling.pdf}
+\caption{Accuracy by gold-patch size (changed lines); bin sizes in parentheses.
+The dotted line is the judges' mean after position calibration.}
+\label{fig:scaling}
+\end{figure}
+
+\input{generated/tab_scaling.tex}
+
+\subsection{Defect-class error profile (O4)}
+\label{sec:res-classes}
+
+\Cref{tab:classes} breaks accuracy down by class.  \ClassText{}
+
+\input{generated/tab_classes.tex}
+
+\subsection{Mitigation: repository context, and thinking (O6)}
+\label{sec:res-context}
+
+\Cref{tab:context} compares context-augmented prompts with the diff-only
+prompt on the same pairs.  \ContextText{}
+
+\input{generated/tab_context.tex}
+
+\subsection{Baselines and point-wise judging}
+\label{sec:res-baselines}
+
+\Cref{tab:baselines} lists the non-LLM baselines.  \BaselineText{}
+
+\input{generated/tab_baselines.tex}

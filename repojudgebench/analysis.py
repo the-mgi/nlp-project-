@@ -375,10 +375,13 @@ def main():
                                         "gap": float(a.mean() - b.mean()),
                                         "ci": [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]}
         base = pt[(pt.model == m) & (pt.condition == "diff_only")].set_index("item_id")["acc"]
+        base_cal = pt[(pt.model == m) & (pt.condition == "diff_only")].set_index("item_id")["acc_calibrated"]
         for cond in sorted(set(pt[pt.model == m]["condition"])):
             if cond.startswith("ctx_") or cond.startswith("think"):
                 other = pt[(pt.model == m) & (pt.condition == cond)].set_index("item_id")["acc"]
+                other_cal = pt[(pt.model == m) & (pt.condition == cond)].set_index("item_id")["acc_calibrated"]
                 summary["context_gain"][m][cond] = paired_diff(other, base)
+                summary["context_gain"][m][cond]["calibrated"] = paired_diff(other_cal, base_cal)
                 # per class
                 mm = meta.set_index("item_id")["defect_class"]
                 per = {}
@@ -387,6 +390,16 @@ def main():
                     if len(set(ids) & set(other.index)):
                         per[cls] = paired_diff(other[other.index.isin(ids)], base[base.index.isin(ids)])
                 summary["context_gain"][m][cond + "::by_class"] = per
+    # thinking vs non-thinking for the hybrid judge, on the same pairs
+    for base_m, think_m in (("qwen3-1.7b", "qwen3-1.7b-think"),):
+        bt = pt[(pt.model == base_m) & (pt.condition == "diff_only")].set_index("item_id")["acc"]
+        tt = pt[(pt.model == think_m) & (pt.condition == "diff_only")].set_index("item_id")["acc"]
+        if len(bt) and len(tt):
+            summary["context_gain"][base_m]["think"] = paired_diff(tt, bt)
+            btc = pt[(pt.model == base_m) & (pt.condition == "diff_only")].set_index("item_id")["acc_calibrated"]
+            ttc = pt[(pt.model == think_m) & (pt.condition == "diff_only")].set_index("item_id")["acc_calibrated"]
+            summary["context_gain"][base_m]["think"]["calibrated"] = paired_diff(ttc, btc)
+            summary["by_model"][base_m]["think"] = summary["by_model"][think_m]["diff_only"]
     # pointwise (secondary condition)
     summary["pointwise"] = {}
     if not v.empty and (v["mode"] == "pointwise").any():
