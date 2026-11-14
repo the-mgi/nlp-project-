@@ -488,6 +488,20 @@ def op_drop_eager_loading(ctx: _Ctx):
                            node.lineno, node.end_lineno, ctx.origin(node.lineno), new)
 
 
+def op_drop_prefetch_objects(ctx: _Ctx):
+    for node in ast.walk(ctx.tree):
+        if not (isinstance(node, ast.Expr) and _call_name(node.value) == "prefetch_related_objects"):
+            continue
+        blk = _block_of(node, ctx.parents)
+        if not blk or len(blk) < 2 or not ctx.in_region(node.lineno, node.end_lineno):
+            continue
+        new = ctx.replace_lines(node.lineno, node.end_lineno, [])
+        yield Mutation("n_plus_one", "drop_eager_loading",
+                       "`prefetch_related_objects(...)` removed; related rows are fetched "
+                       "with one query per object",
+                       node.lineno, node.end_lineno, ctx.origin(node.lineno), new)
+
+
 def op_unsafe_migration(ctx: _Ctx):
     p = ctx.path.replace("\\", "/")
     if not re.search(r"(^|/)(migrations|alembic|versions)/", p):
@@ -537,7 +551,7 @@ def op_unsafe_migration(ctx: _Ctx):
 
 
 OPERATORS = [
-    op_drop_eager_loading,
+    op_drop_eager_loading, op_drop_prefetch_objects,
     op_unwrap_lock, op_drop_select_for_update, op_drop_atomic_decorator,
     op_drop_guard, op_drop_auth_decorator,
     op_unsafe_migration,
