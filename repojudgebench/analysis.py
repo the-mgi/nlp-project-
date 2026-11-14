@@ -398,7 +398,8 @@ def main():
 
 
 def dataset_stats(builds: list[Path], meta: pd.DataFrame) -> dict:
-    recs = [r for b in builds for r in load_jsonl(b)]
+    from .make_items import dedupe
+    recs = dedupe([r for b in builds for r in load_jsonl(b)])
     st = Counter(r.get("status") for r in recs)
     cand = Counter()
     caught = Counter()
