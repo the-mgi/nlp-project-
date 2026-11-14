@@ -8,7 +8,16 @@ gold-passing tests green.  Constructing it showed that the PR's tests catch only
 \TestCatchRate{} of review-relevant injected defects, so a test-based oracle
 cannot separate the two patches by construction.
 
-\ConclusionJudges{}
+On this benchmark, six open-weight judges of 1.5--4B parameters do not
+behave as reviewers.  Their raw pairwise accuracy is at chance in both regimes
+because the verdict follows the presentation slot.  After balanced position
+calibration, the three smallest judges prefer the defective patch
+significantly more often than the correct one, Llama-3.2-3B is at chance, and
+only the two 4B judges keep a weak correct signal (\CalRQwenM{} and
+\CalRGemma{}).  We could not observe a degradation with diff size, because
+accuracy is already at the floor for the diff sizes we could judge; retrieved
+repository context and a thinking mode reduce the preference for the
+defective patch but do not make a small judge reliable.
 
 Three lessons follow.  First, the reliability problems that \CJB{} reports for
 single-file code---sensitivity to presentation order---do not disappear at

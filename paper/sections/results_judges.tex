@@ -25,7 +25,15 @@ removing position bias, below.
 \label{sec:res-robust}
 
 \Cref{tab:robust} shows why raw accuracy is uninformative: the verdicts are
-dominated by the \emph{slot} in which a patch is shown.  \RobustText{}
+dominated by the \emph{slot} in which a patch is shown.  On \RJB{} the code models answer by slot: Qwen2.5-Coder-1.5B
+picks the first patch in every prompt (flip rate \FlipRCoderS{}), and
+Qwen2.5-Coder-3B and Llama-3.2-3B prefer the first slot in most pairs.  The two
+4B judges, Qwen3-4B and Gemma-3-4B, show the opposite preference in both
+regimes and choose the second slot almost always ($P(A)\le 4\%$).  Flip rates
+are 71--100\% in both regimes, so position bias is at least as dominant on
+\RJB{} as on single-file code.  Its direction can even reverse between regimes:
+Qwen2.5-Coder-1.5B, Qwen2.5-Coder-3B and Llama-3.2-3B prefer slot B on the
+control set but slot A on \RJB{}.
 Self-consistency (SC) is high exactly where a judge is most position-biased, so
 consistency across samples is not evidence of reliability.
 
@@ -33,7 +41,19 @@ consistency across samples is not evidence of reliability.
 
 \textbf{Balanced position calibration.}  Averaging the probability assigned to
 the gold patch over both orders removes a constant slot preference
-(\cref{tab:main}, ``Calibrated'').  \CalibText{}
+(\cref{tab:main}, ``Calibrated'').  On the control subset the calibrated accuracies are
+\CalRangeC{} and every interval includes 50\%.  On \RJB{} the judges split
+into three groups.  The three smallest judges become clearly \emph{worse} than
+chance---Qwen2.5-Coder-1.5B \CalRCoderS{} \CalCIRCoderS{}, Qwen2.5-Coder-3B
+\CalRCoderM{} \CalCIRCoderM{}, Qwen3-1.7B \CalRQwenS{} \CalCIRQwenS{}---i.e.\
+once the slot preference is removed they systematically prefer the
+\emph{defective} patch.  Llama-3.2-3B is at chance (\CalRLlama{} \CalCIRLlama{}).
+The two 4B judges recover a weak correct signal: Qwen3-4B \CalRQwenM{}
+\CalCIRQwenM{} (above chance) and Gemma-3-4B \CalRGemma{} \CalCIRGemma{}
+(borderline), even though their raw verdicts are almost entirely positional.
+The difference between the regimes is therefore not a uniform drop: for most
+judges the residual signal on \RJB{} points in the wrong direction, and only
+the largest judges extract any information from the diffs.
 
 \subsection{Length bias}
 \label{sec:res-length}
@@ -42,7 +62,14 @@ The variant differs from the gold patch by a single mutation, but the mutation
 changes the size of the diff: in \VarLongerShare{} of judged pairs the
 defective variant's diff is longer (e.g.\ unwrapping a \texttt{with} block
 re-indents its body).  \Cref{tab:length} shows that judge preferences follow
-this length difference.  \LengthText{}  The same artefact makes the benchmark
+this length difference.  Among pairs of unequal length, the three smallest judges
+prefer the longer patch in 77--87\% of cases and Llama-3.2-3B in 64\%.  The
+dependence is visible in the site origin as well: when the defect is injected
+into pre-existing code (so the variant additionally deletes or re-indents
+lines), the calibrated accuracy of these four judges falls to 12--39\%, while
+on variants that only change lines the PR added it is 52--90\%.  The two 4B
+judges do not show this preference (41\% each) and are the judges whose
+residual signal points in the right direction.  The same artefact makes the benchmark
 exploitable: choosing the patch with fewer changed lines scores
 \LengthHeurAcc{} (\cref{tab:baselines}).  We report this as a limitation of the
 current construction and as a warning for execution-free judges, which can
@@ -55,7 +82,17 @@ shorter than the positives.
 \label{sec:res-scaling}
 
 \Cref{fig:scaling} bins accuracy by the size of the gold patch and
-\cref{tab:scaling} reports the pooled logistic regression.  \ScalingText{}
+\cref{tab:scaling} reports the pooled logistic regression.  We find no measurable degradation with diff size: none
+of the three coefficients is significantly different from zero (the size
+coefficient is even slightly positive, $p=0.07$), and the model explains
+almost none of the variance (McFadden $R^2<0.01$).  Predicted accuracy is
+slightly \emph{below} chance for the smallest patches and statistically
+indistinguishable from chance from about \ChanceLines{} changed lines upward.
+The operating-envelope question of the proposal therefore has a degenerate
+answer for these judges: their verdicts carry no information about
+correctness at any diff size we observe (up to \MaxJudgedLines{} changed lines in
+judged pairs); the decline we hypothesised cannot be observed when accuracy is
+already at the floor.
 
 \begin{figure}[t]
 \centering
@@ -70,7 +107,17 @@ The dotted line is the judges' mean after position calibration.}
 \subsection{Defect-class error profile (O4)}
 \label{sec:res-classes}
 
-\Cref{tab:classes} breaks accuracy down by class.  \ClassText{}
+\Cref{tab:classes} breaks accuracy down by class.  Raw accuracy is close to 50\% for every class because of
+position bias, so the pooled calibrated accuracy is more informative:
+silent error swallowing \CalClsSES{}, resource leaks \CalClsRL{}, races
+\CalClsRace{} and authorisation regressions \CalClsAuth{} (pairs pooled over
+judges, $n$ in \cref{tab:classes}).  Removing an authorisation guard is the
+defect the judges miss most consistently, which agrees with our hypothesis that
+non-local defects are hardest; but the race class is too small to support the
+complementary claim, and the N+1 and migration classes cannot be evaluated.
+The static-analysis rows show the contrast with a pattern matcher: its targeted
+rules detect a share of the error-swallowing and resource-leak variants and
+never fire on the other classes.
 
 \input{generated/tab_classes.tex}
 
@@ -78,13 +125,33 @@ The dotted line is the judges' mean after position calibration.}
 \label{sec:res-context}
 
 \Cref{tab:context} compares context-augmented prompts with the diff-only
-prompt on the same pairs.  \ContextText{}
+prompt on the same pairs.  Raw accuracy does not change with any context condition
+or budget: the slot preference of Qwen2.5-Coder-1.5B survives every prompt, so
+all differences are within $\pm$1 point.  After calibration, adding context
+moves Qwen2.5-Coder-1.5B by $+7$ to $+11$ points (intervals include zero), and
+the 6k-character retrieved context improves Qwen3-1.7B by \CtxQwenSCal{}
+points; its thinking mode improves calibrated accuracy by a similar
+\ThinkQwenSCal{} points.  Context and reasoning therefore partially counteract
+the length-driven preference for the defective patch, but neither lifts a
+small judge above chance; for these judges the limitation is in reasoning, not
+only in what is visible.  The larger retrieval budget is not clearly better
+than the smaller one (overlapping intervals).
 
 \input{generated/tab_context.tex}
 
 \subsection{Baselines and point-wise judging}
 \label{sec:res-baselines}
 
-\Cref{tab:baselines} lists the non-LLM baselines.  \BaselineText{}
+\Cref{tab:baselines} lists the non-LLM baselines.  The execution oracle scores 0\% by construction.
+Static analysis with the eight rules chosen in advance is the strongest
+legitimate baseline: \StaticRelAcc{} on the \NStatic{} pairs we could
+materialise, flagging the defective variant in \StaticRelFlagVar{} of pairs and
+the gold patch in none.  Running every Ruff rule instead gives \StaticAllAcc{}:
+the general rule set flags both patches equally often.  The shorter-patch
+heuristic reaches \LengthHeurAcc{}, which quantifies the length artefact
+discussed above.  Point-wise scoring with Qwen2.5-Coder-1.5B gives
+\PointwiseAcc{} when expected ratings are compared, but the greedy 1--5
+ratings tie in \PointwiseTies{} of pairs, an even stronger version of the
+tie problem that led \CJB{} to prefer pairwise judging.
 
 \input{generated/tab_baselines.tex}

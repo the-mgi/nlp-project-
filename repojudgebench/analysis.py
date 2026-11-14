@@ -195,7 +195,7 @@ def logistic_scaling(pt: pd.DataFrame, meta: pd.DataFrame) -> dict:
     sf = pred.summary_frame(alpha=0.05)
     out["curve"] = [{"lines": int(g), "p": float(r["predicted"]), "lo": float(r["ci_lower"]),
                      "hi": float(r["ci_upper"])} for g, (_, r) in zip(grid, sf.iterrows())]
-    chance = [c["lines"] for c in out["curve"] if c["lo"] <= 0.5]
+    chance = [c["lines"] for c in out["curve"] if c["lo"] <= 0.5 <= c["hi"]]
     out["chance_from_lines"] = chance[0] if chance else None
     out["pseudo_r2"] = float(m.prsquared)
     return out
@@ -479,6 +479,7 @@ def dataset_stats(builds: list[Path], meta: pd.DataFrame) -> dict:
         if "judged" in meta:
             out["pairs_judged"] = int(meta["judged"].sum())
             out["by_class_judged"] = meta[meta["judged"]]["defect_class"].value_counts().to_dict()
+            out["max_judged_gold_lines"] = int(meta[meta["judged"]]["gold_changed_lines"].max())
             if "prompt_tokens" in meta:
                 pt_ = meta[meta["judged"]]["prompt_tokens"]
                 out["judged_prompt_tokens"] = {"median": float(pt_.median()), "max": float(pt_.max()),

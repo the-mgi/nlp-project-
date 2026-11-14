@@ -33,7 +33,11 @@ Gemma-3-4B~\cite{gemma2025gemma3} & 4B & Q4\_0 & general \\
 \end{table}
 
 \textbf{Evaluation sets.}  \RJB{}: all admitted, non-leaking pairs whose
-diff-only prompt fits in \MaxPromptTokens{} tokens (\NEvalPairs{} pairs).
+diff-only prompt fits in \MaxPromptTokens{} tokens (\NPairsJudged{} pairs).
+The pairs are stored in a fixed pseudo-random order (sorted by a hash of the
+pair id), and each judge processed this list within a time budget, so every
+judge is evaluated on an unbiased random subset; $n$ per judge is reported
+with every result.
 \CJB{} control: \NCJBPairs{} pairs, 15 per task (code generation, code repair,
 unit-test generation), sampled with a fixed seed from the responses of a single generator model of the
 dataset (the one with the shortest responses) among pairs whose question and two responses total at most 6{,}000 characters.  The control uses
@@ -42,12 +46,15 @@ answers).  Control and \RJB{} prompts are therefore of comparable length, so the
 comparison isolates the regime rather than prompt length.
 
 \textbf{Conditions.}  All judges are evaluated diff-only and on the control set,
-in both orders.  Because CPU inference is slow (roughly
-\SpeedSmall{}~tokens/s for the 1.5--1.7B judges and \SpeedLarge{}~tokens/s for
-the 3--4B judges), the more expensive conditions are run for the two fastest
-judges: context-augmented judging (retrieved context at 2{,}000 and 6{,}000
-characters, file context at 6{,}000 characters), point-wise scoring, and (for
-Qwen3-1.7B) the thinking condition on a stratified subset of \NThinkPairs{} pairs.
+in both orders.  Because CPU inference is slow (median prompt-processing
+throughput of roughly \SpeedSmall{}~tokens/s for the 1.5--1.7B judges and
+\SpeedLarge{}~tokens/s for the 3--4B judges), the work was spread over several
+identical 4-core cloud machines, and the more expensive conditions were run for
+the two fastest judges only: Qwen2.5-Coder-1.5B with retrieved context (2{,}000
+and 6{,}000 characters), file context (6{,}000 characters) and point-wise
+scoring; Qwen3-1.7B with retrieved context (6{,}000 characters) and in thinking
+mode, each on a prefix of the same pseudo-random order (up to 70 and 50 pairs,
+respectively, within the time budget).
 
 \textbf{Baselines.}  \emph{Random}: 50\%.  \emph{Execution oracle}: the PR's
 tests, 0\% by construction.  \emph{Static analysis}: Ruff (all rules) and

@@ -2,15 +2,22 @@
 \caption{Accuracy (\%) by defect class on \RJB{} (diff-only). The pooled row averages pairs over all judges and reports a bootstrap CI.}
 \label{tab:classes}
 \centering\footnotesize
-\begin{tabular}{@{}l@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Judge \\
+Judge & N+1 query & Race / concurrency & Authorisation & Resource leak & Error swallowing \\
 \midrule
+Qwen2.5-Coder-1.5B & 50.0 & 50.0 & 50.0 & 50.0 & 50.0 \\
+Qwen2.5-Coder-3B & -- & 50.0 & 50.0 & 50.0 & 46.6 \\
+Qwen3-1.7B & 50.0 & 50.0 & 50.0 & 40.0 & 41.5 \\
+Qwen3-4B & -- & 50.0 & 50.0 & 50.0 & 51.1 \\
+Llama-3.2-3B & 50.0 & 50.0 & 50.0 & 40.6 & 48.7 \\
+Gemma-3-4B & 50.0 & 50.0 & 50.0 & 50.0 & 51.5 \\
+Qwen3-1.7B-think & -- & 50.0 & 50.0 & 50.0 & 44.8 \\
 \midrule
-All judges \\
-Pairs ($n$) \\
-Static (relevant) \\
-Static (all rules) \\
+All judges & 50.0 [50, 50] & 50.0 [36, 61] & 50.0 [50, 50] & 46.6 [43, 50] & 48.2 [46, 50] \\
+Pairs ($n$) & 2 & 5 & 5 & 25 & 118 \\
+Static (relevant) & 50.0 & 50.0 & 50.0 & 66.7 & 70.8 \\
+Static (all rules) & 75.0 & 28.6 & 10.0 & 47.0 & 53.0 \\
 \bottomrule
 \end{tabular}
 \end{table*}

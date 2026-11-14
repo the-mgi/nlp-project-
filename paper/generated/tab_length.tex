@@ -1,0 +1,19 @@
+\begin{table}[t]
+\caption{Length bias on \RJB{}: position-calibrated accuracy (\%) by whether the defective variant's diff has more, the same or fewer changed lines than the gold patch (judged pairs: 112 / 24 / 19); $n$ in parentheses. Last column: share of pairs of unequal length in which the judge prefers the longer patch.}
+\label{tab:length}
+\centering\footnotesize
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Judge & Var.\ longer & Same & Var.\ shorter & Prefers longer \\
+\midrule
+Qwen2.5-Coder-1.5B & 19.5 (77) & 37.5 (16) & 72.7 (11) & 79.5 [72, 87] \\
+Qwen2.5-Coder-3B & 11.5 (26) & 42.9 (7) & 75.0 (4) & 86.7 [74, 97] \\
+Qwen3-1.7B & 22.0 (59) & 53.8 (13) & 71.4 (7) & 77.3 [66, 88] \\
+Qwen3-4B & 66.0 (47) & 55.6 (9) & 85.7 (7) & 40.7 [27, 55] \\
+Llama-3.2-3B & 40.5 (74) & 93.3 (15) & 91.7 (12) & 64.0 [53, 75] \\
+Gemma-3-4B & 62.5 (64) & 42.9 (14) & 60.0 (10) & 40.5 [30, 52] \\
+Qwen3-1.7B-think & 26.9 (26) & 71.4 (7) & 50.0 (4) & 70.0 [52, 88] \\
+All judges & 37.3 (373) & 56.8 (81) & 74.5 (55) & 64.3 [59, 69] \\
+\bottomrule
+\end{tabular}
+\end{table}

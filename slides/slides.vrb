@@ -1,0 +1,10 @@
+\frametitle{Demonstration}
+\begin{verbatim}
+python scripts/demo.py --model models/qwen2.5-coder-1.5b-instruct-q8_0.gguf
+\end{verbatim}
+\begin{itemize}
+  \item prints one pair: issue, injected defect, the lines where the variant differs,
+  \item number of tests both patches pass,
+  \item judge verdict probabilities in both orders.
+\end{itemize}
+All code, data and logs: \texttt{github.com/the-mgi/nlp-project-}

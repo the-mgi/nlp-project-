@@ -54,4 +54,11 @@ baseline, and a context-retrieval mitigation with a budget ablation.
 prompts, the dataset and the raw verdict logs.
 \end{enumerate}
 
-The main finding is negative and, we argue, important: \MainFinding{}
+The main finding is negative.  Small open judges do not separate correct from
+test-passing defective patches at repository level: their verdicts follow the
+presentation slot, and once that is calibrated away most of them prefer the
+longer---usually the defective---patch.  Cheap targeted static analysis beats the
+raw pairwise accuracy of every judge we could run and is matched only by the
+best judge after position calibration.  We also show that our own benchmark
+carries a length artefact, and we argue that judge benchmarks must check for
+such shortcuts.

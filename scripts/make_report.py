@@ -105,6 +105,24 @@ def main():
     rng = lambda xs: f"{pct(min(xs))}--{pct(max(xs))}\\%" if xs else "--"
     mac["AccRangeR"], mac["AccRangeC"] = rng(rj), rng(cj)
     mac["CalRangeR"], mac["CalRangeC"] = rng(rc_), rng(cc_)
+    sc_ = S.get("scaling", {}).get("pooled", {})
+    mac["ChanceLines"] = str(sc_.get("chance_from_lines")) if sc_.get("chance_from_lines") else "--"
+    mac["MaxJudgedLines"] = str(int(D.get("max_judged_gold_lines", 0)))
+    allc = S["by_class"].get("all_judges", {})
+    for key, cls in (("CalClsSES", "silent_error_swallowing"), ("CalClsRL", "resource_leak"),
+                     ("CalClsRace", "race_condition"), ("CalClsAuth", "authorization_regression")):
+        if cls in allc:
+            mac[key] = f"{pct(allc[cls]['acc_calibrated'])}\\% {ci(allc[cls]['acc_calibrated_ci'])}"
+    cg = S.get("context_gain", {}).get("qwen3-1.7b", {})
+    fmt = lambda d: f"{'+' if d['diff'] >= 0 else ''}{pct(d['diff'])} {ci(d['ci'])}"
+    if "ctx_retrieved_6000" in cg:
+        mac["CtxQwenSCal"] = fmt(cg["ctx_retrieved_6000"]["calibrated"])
+    if "think" in cg:
+        mac["ThinkQwenSCal"] = fmt(cg["think"]["calibrated"])
+    pw = S.get("pointwise", {}).get("qwen2.5-coder-1.5b")
+    if pw:
+        mac["PointwiseAcc"] = f"{pct(pw['acc'])}\\% {ci(pw['ci'])}"
+        mac["PointwiseTies"] = f"{pct(pw['greedy_tie_rate'])}\\%"
     for k, v in S.get("extra_macros", {}).items():
         mac[k] = v
     with open(out / "numbers.tex", "w") as fo:

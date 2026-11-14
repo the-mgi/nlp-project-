@@ -1,18 +1,127 @@
-\newcommand{\NPairs}{15}
-\newcommand{\NInstances}{10}
-\newcommand{\NRepos}{8}
-\newcommand{\NCandidates}{22}
-\newcommand{\NCaught}{7}
-\newcommand{\TestCatchRate}{31.8\%}
-\newcommand{\NProcessed}{20}
-\newcommand{\NJudges}{2}
-\newcommand{\MainFinding}{PLACEHOLDER}
+\newcommand{\NPairs}{203}
+\newcommand{\NInstances}{133}
+\newcommand{\NRepos}{90}
+\newcommand{\NCandidates}{341}
+\newcommand{\NCaught}{138}
+\newcommand{\TestCatchRate}{40.5\%}
+\newcommand{\NProcessed}{292}
+\newcommand{\NJudges}{6}
+\newcommand{\StaticRelAcc}{68.4\%}
+\newcommand{\StaticRelFlagVar}{36.9\%}
+\newcommand{\StaticAllAcc}{50.0\%}
+\newcommand{\NStatic}{179}
+\newcommand{\LengthHeurAcc}{80.0\%}
+\newcommand{\PrefersLonger}{64.3\%}
+\newcommand{\VarLongerShare}{72.3\%}
+\newcommand{\NPairsJudged}{155}
+\newcommand{\NStatusNoSite}{33}
+\newcommand{\NStatusNotGreen}{46}
+\newcommand{\NStatusCaught}{29}
+\newcommand{\NStatusError}{51}
+\newcommand{\NFromLive}{154}
+\newcommand{\NFromRebench}{49}
+\newcommand{\DateMin}{2025-01-01}
+\newcommand{\DateMax}{2025-09-02}
+\newcommand{\NOriginContext}{141}
+\newcommand{\NOriginAdded}{62}
+\newcommand{\NLeakPairs}{6}
+\newcommand{\NTooLong}{42}
+\newcommand{\NJudgedMedianTokens}{2{,}516}
+\newcommand{\CatchAuth}{60.0\%, 9/15}
+\newcommand{\CatchSES}{43.4\%, 119/274}
+\newcommand{\CatchRace}{36.4\%, 4/11}
+\newcommand{\CatchRL}{15.4\%, 6/39}
+\newcommand{\NGoldMedianLines}{48}
+\newcommand{\NGoldMedianFiles}{2}
+\newcommand{\NGoldMedianHunks}{7}
+\newcommand{\AccRCoderS}{50.0\%}
+\newcommand{\CalRCoderS}{27.9\%}
+\newcommand{\CalCIRCoderS}{[20, 36]}
+\newcommand{\FlipRCoderS}{100.0\%}
+\newcommand{\NRCoderS}{104}
+\newcommand{\AccCCoderS}{50.0\%}
+\newcommand{\CalCCoderS}{55.6\%}
+\newcommand{\CalCICCoderS}{[42, 69]}
+\newcommand{\FlipCCoderS}{86.7\%}
+\newcommand{\NCCoderS}{45}
+\newcommand{\AccRCoderM}{47.3\%}
+\newcommand{\CalRCoderM}{24.3\%}
+\newcommand{\CalCIRCoderM}{[11, 40]}
+\newcommand{\FlipRCoderM}{89.2\%}
+\newcommand{\NRCoderM}{37}
+\newcommand{\AccCCoderM}{52.2\%}
+\newcommand{\CalCCoderM}{51.1\%}
+\newcommand{\CalCICCoderM}{[38, 67]}
+\newcommand{\FlipCCoderM}{77.8\%}
+\newcommand{\NCCoderM}{45}
+\newcommand{\AccRQwenS}{42.4\%}
+\newcommand{\CalRQwenS}{31.6\%}
+\newcommand{\CalCIRQwenS}{[21, 43]}
+\newcommand{\FlipRQwenS}{77.2\%}
+\newcommand{\NRQwenS}{79}
+\newcommand{\AccCQwenS}{55.6\%}
+\newcommand{\CalCQwenS}{61.1\%}
+\newcommand{\CalCICQwenS}{[47, 76]}
+\newcommand{\FlipCQwenS}{71.1\%}
+\newcommand{\NCQwenS}{45}
+\newcommand{\AccRQwenM}{50.8\%}
+\newcommand{\CalRQwenM}{66.7\%}
+\newcommand{\CalCIRQwenM}{[54, 79]}
+\newcommand{\FlipRQwenM}{98.4\%}
+\newcommand{\NRQwenM}{63}
+\newcommand{\AccCQwenM}{50.0\%}
+\newcommand{\CalCQwenM}{48.9\%}
+\newcommand{\CalCICQwenM}{[36, 64]}
+\newcommand{\FlipCQwenM}{100.0\%}
+\newcommand{\NCQwenM}{45}
+\newcommand{\AccRLlama}{47.5\%}
+\newcommand{\CalRLlama}{54.5\%}
+\newcommand{\CalCIRLlama}{[44, 64]}
+\newcommand{\FlipRLlama}{79.2\%}
+\newcommand{\NRLlama}{101}
+\newcommand{\AccCLlama}{52.2\%}
+\newcommand{\CalCLlama}{42.2\%}
+\newcommand{\CalCICLlama}{[29, 56]}
+\newcommand{\FlipCLlama}{82.2\%}
+\newcommand{\NCLlama}{45}
+\newcommand{\AccRGemma}{51.1\%}
+\newcommand{\CalRGemma}{59.1\%}
+\newcommand{\CalCIRGemma}{[49, 68]}
+\newcommand{\FlipRGemma}{97.7\%}
+\newcommand{\NRGemma}{88}
+\newcommand{\AccCGemma}{50.0\%}
+\newcommand{\CalCGemma}{46.7\%}
+\newcommand{\CalCICGemma}{[33, 62]}
+\newcommand{\FlipCGemma}{100.0\%}
+\newcommand{\NCGemma}{45}
+\newcommand{\AccRThink}{45.9\%}
+\newcommand{\CalRThink}{37.8\%}
+\newcommand{\CalCIRThink}{[22, 54]}
+\newcommand{\FlipRThink}{81.1\%}
+\newcommand{\NRThink}{37}
+\newcommand{\AccCThink}{54.9\%}
+\newcommand{\CalCThink}{58.5\%}
+\newcommand{\CalCICThink}{[41, 73]}
+\newcommand{\FlipCThink}{75.6\%}
+\newcommand{\NCThink}{41}
+\newcommand{\AccRangeR}{42.4--51.1\%}
+\newcommand{\AccRangeC}{50.0--55.6\%}
+\newcommand{\CalRangeR}{24.3--66.7\%}
+\newcommand{\CalRangeC}{42.2--61.1\%}
+\newcommand{\ChanceLines}{64}
+\newcommand{\MaxJudgedLines}{138}
+\newcommand{\CalClsSES}{45.4\% [40, 51]}
+\newcommand{\CalClsRL}{40.5\% [28, 54]}
+\newcommand{\CalClsRace}{61.9\% [29, 100]}
+\newcommand{\CalClsAuth}{23.1\% [7, 45]}
+\newcommand{\CtxQwenSCal}{+21.6 [5, 40]}
+\newcommand{\ThinkQwenSCal}{+16.2 [3, 32]}
+\newcommand{\PointwiseAcc}{56.4\% [47, 65]}
+\newcommand{\PointwiseTies}{87.2\%}
 \newcommand{\NPoolInstances}{1{,}216}
 \newcommand{\NPoolRepos}{367}
 \newcommand{\ThinkBudget}{512}
 \newcommand{\MaxPromptTokens}{6{,}000}
-\newcommand{\NEvalPairs}{X}
 \newcommand{\NCJBPairs}{45}
-\newcommand{\SpeedSmall}{X}
-\newcommand{\SpeedLarge}{X}
-\newcommand{\NThinkPairs}{X}
+\newcommand{\SpeedSmall}{120--190}
+\newcommand{\SpeedLarge}{40--130}

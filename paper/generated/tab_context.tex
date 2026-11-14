@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Mitigation (O6) and thinking: accuracy (\%) of each condition and paired difference to the diff-only prompt on the same pairs (raw and after balanced position calibration).}
+\label{tab:context}
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Judge & Condition & Acc. & $\Delta$ & $\Delta$ calib. & $n$ \\
+\midrule
+Qwen2.5-Coder-1.5B & + file, 6k chars & 50.0 & +0.0 [-3, 3] & +11.1 [-2, 26] & 45 \\
+Qwen2.5-Coder-1.5B & + retrieved, 2k chars & 50.0 & +0.0 [-2, 2] & +6.7 [-5, 20] & 60 \\
+Qwen2.5-Coder-1.5B & + retrieved, 6k chars & 49.2 & -0.8 [-4, 2] & +10.0 [-3, 23] & 60 \\
+Qwen3-1.7B & + retrieved, 6k chars & 47.3 & +5.4 [-4, 15] & +21.6 [5, 40] & 37 \\
+Qwen3-1.7B & thinking & 45.9 & +4.1 [-4, 13] & +16.2 [3, 32] & 37 \\
+\bottomrule
+\end{tabular}
+\end{table}

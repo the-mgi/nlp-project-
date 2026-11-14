@@ -1,1 +1,25 @@
-Placeholder abstract.
+LLM judges are increasingly used to evaluate code changes, but the main
+benchmark for them, CodeJudgeBench, contains only single-file programs whose
+correctness is decided by hidden tests.  We ask whether judge reliability
+survives the move to repository-level code changes whose defects pass the
+tests.  We build \RJB{}: \NPairs{} (gold patch, defective variant) pairs from
+\NInstances{} real pull requests created after 1~January~2025 in \NRepos{}
+Python repositories.  Each variant is a template-guided AST mutation of the
+real patch from one of six review-oriented defect classes, and it is admitted
+only if every test that passes with the gold patch also passes with the
+variant inside the task's published Docker environment; the pull requests'
+tests caught \TestCatchRate{} of the candidates.  We evaluate six open-weight
+judges (1.5--4B parameters, plus a thinking mode) with the CodeJudgeBench
+pairwise protocol on \RJB{} and on a CodeJudgeBench control subset.  Raw
+pairwise accuracy is at chance in both regimes (\AccRangeR{} on \RJB{}) because
+verdicts are dominated by the presentation slot.  After balanced position
+calibration, the three smallest judges are significantly \emph{worse} than
+chance on \RJB{} (\CalRCoderM{}--\CalRQwenS{}): they prefer the longer patch,
+and the defective variant is longer in \VarLongerShare{} of pairs.  Only the
+4B judges retain a weak correct signal (up to \CalRQwenM{}).  Accuracy does
+not vary measurably with diff size, retrieved repository context and thinking
+mode only partly counteract the length preference, and a static-analysis
+baseline with eight targeted rules reaches \StaticRelAcc{}.  A trivial
+shorter-patch rule scores \LengthHeurAcc{}, which exposes a length artefact
+that future versions of the benchmark must remove.  We release the dataset,
+harness, prompts and all verdict logs.

@@ -1,0 +1,6 @@
+\newcommand{\SlideRegimeText}{Raw accuracy is at chance in both regimes: \AccRangeC{} on the single-file control, \AccRangeR{} on \RJB{}.}
+\newcommand{\SlidePositionText}{Verdicts follow the slot: flip rates 71--100\%; Qwen2.5-Coder-1.5B always picks A on \RJB{}, the 4B judges almost always pick B.}
+\newcommand{\SlideScalingText}{No measurable effect of diff size, files or hunks (all CIs include 0); accuracy indistinguishable from chance from \ChanceLines{} changed lines up. Authorisation regressions are missed most (\CalClsAuth{} calibrated).}
+\newcommand{\SlideContextText}{Retrieved repository context: no change in raw accuracy; +\,7 to +\,22 points calibrated (significant only for Qwen3-1.7B, \CtxQwenSCal{}).}
+\newcommand{\SlideThinkText}{Thinking mode (Qwen3-1.7B, 512 tokens): \ThinkQwenSCal{} points calibrated --- still not above chance.}
+\newcommand{\SlideFindingTwo}{After position calibration the small judges prefer the \alert{defective} patch (\CalRCoderM{}--\CalRQwenS{}); only the 4B judges keep a weak correct signal (up to \CalRQwenM{}).}
