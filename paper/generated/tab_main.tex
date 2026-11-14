@@ -1,0 +1,15 @@
+\begin{table*}[t]
+\caption{Pairwise accuracy (\%) with 95\% bootstrap CIs on the \CJB{} control subset (single-file) and on \RJB{} (repository-level, diff-only); a pair's accuracy is the mean of its two presentation orders. $\Delta$ = control $-$ \RJB{}. \emph{Calibrated} = accuracy after balanced position calibration (the probability given to the gold patch is averaged over both orders before deciding). Random = 50\%; the execution oracle scores 0\% on \RJB{} by construction.}
+\label{tab:main}
+\centering\footnotesize
+\begin{tabular}{@{}lllrrlr@{}}
+\toprule
+ & \multicolumn{2}{c}{Accuracy} & & \multicolumn{2}{c}{Calibrated accuracy} & \\
+\cmidrule(lr){2-3}\cmidrule(lr){5-6}
+Judge & \CJB{} control & \RJB{} & $\Delta$ & \CJB{} & \RJB{} & $n$ (pairs) \\
+\midrule
+Qwen2.5-Coder-1.5B & 50.0 [44, 56] & -- & -- & 55.6 & -- & 45/-- \\
+Qwen3-1.7B & 57.1 [45, 69] & -- & -- & 76.2 & -- & 21/-- \\
+\bottomrule
+\end{tabular}
+\end{table*}

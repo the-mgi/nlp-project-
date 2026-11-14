@@ -1,9 +1,9 @@
 \section{Methodology}
 \label{sec:method}
 
-\Cref{fig:pipeline} summarises the pipeline.  It has four stages: selecting
-post-cutoff pull requests, injecting defects, admitting variants by execution,
-and judging.
+\Cref{fig:pipeline} summarises the pipeline: selecting post-cutoff pull
+requests, injecting defects, admitting variants by execution, retrieving
+context, and judging.
 
 \begin{figure}[t]
 \centering
@@ -50,15 +50,16 @@ the region the gold patch touches: a line added by the patch, or the body of a
 function the patch modifies.  We record whether the mutated site was written by
 the patch (\emph{added}) or is pre-existing code in a modified function
 (\emph{context}).  Candidates whose AST is unchanged are rejected.  For each
-task we keep at most one primary and one fallback candidate per class, preferring
-added sites, and at most three classes per task.
+task and class we test up to four candidates (one per operator first, preferring
+added sites, in a seeded random order) and admit at most two variants per class,
+produced by different operators; at most three classes are tried per task.
 
 \begin{table}[t]
 \caption{Defect classes and injection operators.}
 \label{tab:operators}
 \centering
 \footnotesize
-\begin{tabular}{@{}p{0.27\columnwidth}p{0.66\columnwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.25\columnwidth}>{\raggedright\arraybackslash}p{0.68\columnwidth}@{}}
 \toprule
 Class & Operator(s) \\
 \midrule
@@ -79,8 +80,8 @@ and render it again with \texttt{git diff}; the variants are rendered by the
 same command, so formatting cannot reveal which patch is the original.  We then
 apply the test patch and run the pull request's test files (the files touched by
 the test patch and the files of the FAIL\_TO\_PASS tests) with the task's
-\texttt{pytest} command.  A task is kept only if the gold patch passes all of its
-FAIL\_TO\_PASS tests.  A candidate is \emph{admitted} if every test that passes
+\texttt{pytest} command.  A task is kept only if at least one test passes with the
+gold patch and every FAIL\_TO\_PASS test that appears in the test report passes.  A candidate is \emph{admitted} if every test that passes
 with the gold patch also passes with the candidate; otherwise it is recorded as
 \emph{caught by tests}.  The execution oracle therefore scores exactly 0\% on
 \RJB{} by construction: on the PR's tests, gold and variant are
@@ -88,7 +89,8 @@ indistinguishable.
 
 Following SWE-Bench+~\cite{aleithan2024swebenchplus}, we flag \emph{solution
 leakage} when a non-trivial line ($\geq$30 characters) added by the gold patch
-appears verbatim in the issue text, and exclude such tasks from judging.
+appears verbatim (up to whitespace) in the issue text, and exclude such tasks
+from judging.
 
 \subsection{Repository context retrieval (mitigation, O6)}
 To test whether judges fail because they cannot see the code around the diff,

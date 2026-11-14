@@ -1,0 +1,15 @@
+\begin{table*}[t]
+\caption{Robustness (O5), control (C) vs.\ \RJB{} (R), in \%. \emph{Pos.\ gap}: accuracy with the gold patch shown first minus shown second. \emph{Flip}: share of pairs whose verdict selects the same slot in both orders. $P(A)$: mean probability of choosing the first slot. \emph{SC}: expected agreement of two independent $T{=}1$ samples of the verdict.}
+\label{tab:robust}
+\centering\footnotesize
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Pos.\ gap} & \multicolumn{2}{c}{Flip} & \multicolumn{2}{c}{$P(A)$} & \multicolumn{2}{c}{SC} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Judge & C & R & C & R & C & R & C & R \\
+\midrule
+Qwen2.5-Coder-1.5B & -24.4 & -- & 86.7 & -- & 48.5 & -- & 50.5 & -- \\
+Qwen3-1.7B & -38.1 & -- & 66.7 & -- & 36.3 & -- & 68.9 & -- \\
+\bottomrule
+\end{tabular}
+\end{table*}
