@@ -178,8 +178,34 @@ def main():
             "Judge & Condition & Acc. & $\\Delta$ vs diff-only & $n$ \\\\\n\\midrule\n" + "\n".join(rows) +
             "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
 
+    # ---- length-bias table ----------------------------------------------------
+    LB = S.get("length_bias", {})
+    if LB:
+        rows = []
+        for m in models + ["all_judges"]:
+            d = LB.get(m)
+            if not d:
+                continue
+            g = lambda k: (f"{pct(d[k]['acc_calibrated'])} ({d[k]['n']})" if k in d else "--")
+            pl = d.get("prefers_longer")
+            rows.append(" & ".join([NICE.get(m, "All judges" if m == "all_judges" else m),
+                                    g("variant_longer"), g("same_length"), g("variant_shorter"),
+                                    f"{pct(pl['rate'])} {ci(pl['ci'])}" if pl else "--"]) + " \\\\")
+        rc = S.get("length_relation_counts", {})
+        (out / "tab_length.tex").write_text(
+            "\\begin{table}[t]\n\\caption{Length bias on \\RJB{}: position-calibrated accuracy (\\%) by "
+            "whether the defective variant's diff has more, the same or fewer changed lines than the gold patch "
+            f"(judged pairs: {rc.get('variant_longer', 0)} / {rc.get('same_length', 0)} / {rc.get('variant_shorter', 0)}); "
+            "$n$ in parentheses. Last column: share of pairs of unequal length in which the judge prefers the longer patch.}\n"
+            "\\label{tab:length}\n\\centering\\footnotesize\n\\begin{tabular}{@{}lrrrl@{}}\n\\toprule\n"
+            "Judge & Var.\\ longer & Same & Var.\\ shorter & Prefers longer \\\\\n\\midrule\n" + "\n".join(rows) +
+            "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n")
+
     # ---- baselines table -------------------------------------------------------
     rows = ["Random & 50.0 & -- \\\\", "Execution oracle (PR tests) & 0.0 & by construction \\\\"]
+    lh = S.get("length_heuristic")
+    if lh:
+        rows.append(f"Shorter-patch heuristic & {pct(lh['acc'])} & {ci(lh['ci'])}; artefact check \\\\")
     if st:
         for rs, lab in (("relevant", "Static analysis, relevant rules"), ("all", "Static analysis, all rules")):
             rows.append(f"{lab} & {pct(st[rs]['acc'])} & {ci(st[rs]['ci'])}; flags variant {pct(st[rs]['flag_variant_rate'])}\\%, gold {pct(st[rs]['flag_gold_rate'])}\\% \\\\")

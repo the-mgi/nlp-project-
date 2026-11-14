@@ -325,6 +325,30 @@ def main():
         # pooled per-class accuracy (mean over judges)
         summary["by_class"]["all_judges"] = {
             cls: summarise(gc) for cls, gc in main_pt.groupby("defect_class")}
+    # length bias: does the (position-calibrated) preference follow the longer diff?
+    summary["length_bias"] = {}
+    if not main_pt.empty:
+        lb = main_pt.copy()
+        dl = lb["variant_changed_lines"] - lb["gold_changed_lines"]
+        lb["len_rel"] = np.where(dl > 0, "variant_longer", np.where(dl < 0, "variant_shorter", "same_length"))
+        lb["prefers_longer"] = np.where(dl > 0, 1 - lb["acc_calibrated"],
+                                        np.where(dl < 0, lb["acc_calibrated"], np.nan))
+        for m, g in list(lb.groupby("model")) + [("all_judges", lb)]:
+            out_m = {}
+            for rel, gr in g.groupby("len_rel"):
+                out_m[rel] = {"n": int(len(gr)), "acc": float(gr["acc"].mean()),
+                              "acc_calibrated": float(gr["acc_calibrated"].mean()),
+                              "acc_calibrated_ci": list(_ci(gr["acc_calibrated"].to_numpy(), gr))}
+            pl = g["prefers_longer"].dropna()
+            if len(pl):
+                gg = g.loc[pl.index]
+                out_m["prefers_longer"] = {"n": int(len(pl)), "rate": float(pl.mean()),
+                                           "ci": list(_ci(pl.to_numpy(), gg))}
+            summary["length_bias"][m] = out_m
+        summary["length_relation_counts"] = meta[meta.get("judged", True) == True].assign(
+            rel=np.sign(meta["variant_changed_lines"] - meta["gold_changed_lines"])
+        )["rel"].value_counts().rename(index={1: "variant_longer", -1: "variant_shorter", 0: "same_length"}).to_dict() \
+            if "judged" in meta else {}
     # regime gap (O2) and context gain (O6) as paired / unpaired differences
     summary["regime_gap"] = {}
     summary["context_gain"] = defaultdict(dict)
@@ -369,6 +393,13 @@ def main():
             sc = np.where(g["pos"] > g["neg"], 1.0, np.where(g["pos"] < g["neg"], 0.0, 0.5))
             summary["pointwise"][m]["greedy_acc"] = float(sc.mean())
             summary["pointwise"][m]["greedy_tie_rate"] = float((g["pos"] == g["neg"]).mean())
+    # trivial length heuristic: pick the patch with fewer changed lines (ties = coin flip)
+    if "judged" in meta and len(meta):
+        jm = meta[meta["judged"] == True].copy()
+        dl = jm["variant_changed_lines"] - jm["gold_changed_lines"]
+        x = np.where(dl > 0, 1.0, np.where(dl < 0, 0.0, 0.5))
+        summary["length_heuristic"] = {"n": int(len(jm)), "acc": float(x.mean()),
+                                       "ci": list(cluster_boot_ci(x, jm["instance_id"].to_numpy()))}
     # static analysis baseline
     st = pd.DataFrame(load_jsonl(Path(args.raw) / "static_baseline.jsonl"))
     if not st.empty:
