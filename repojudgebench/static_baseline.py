@@ -105,7 +105,7 @@ def main():
             continue
         files = (r.get("context") or {}).get("files", {})
         for v in r["variants"]:
-            item = f"{r['instance_id']}::{v['defect_class']}"
+            item = f"{r['instance_id']}::{v['defect_class']}::{v['operator']}"
             with tempfile.TemporaryDirectory() as g, tempfile.TemporaryDirectory() as b:
                 pg = _materialise(files, r["gold_diff"], g)
                 pb = _materialise(files, v["variant_diff"], b)

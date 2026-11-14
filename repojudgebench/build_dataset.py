@@ -50,6 +50,7 @@ MAX_GOLD_CHANGED_LINES = 400
 TEST_TIMEOUT = 420
 MIRROR = "mirror.gcr.io"
 MIN_FREE_BYTES = 8 * 1024**3
+MAX_PER_CLASS = 2
 PRIORITY = {"n_plus_one": 0, "unsafe_migration": 0, "race_condition": 1,
             "authorization_regression": 1, "resource_leak": 2,
             "silent_error_swallowing": 3}
@@ -304,7 +305,12 @@ def select_candidates(muts_by_file: list[tuple[str, object]], seed: str, k: int 
         cands = by_class[cls]
         rng.shuffle(cands)
         cands.sort(key=lambda pm: 0 if pm[1].site_origin == "added" else 1)
-        chosen.append(cands[:2])  # one primary + one fallback per class
+        # spread over operators first: best candidate of each operator, then the rest
+        firsts, rest, seen_ops = [], [], set()
+        for pm in cands:
+            (rest if pm[1].operator in seen_ops else firsts).append(pm)
+            seen_ops.add(pm[1].operator)
+        chosen.append((firsts + rest)[:4])
     return chosen[:k]
 
 
@@ -394,10 +400,12 @@ def process_instance(row: dict, out_dir: Path, log) -> dict:
             rec["gold_log"] = gold_log
             return rec
         rec["n_gold_pass"] = len(gold_pass)
-        admitted_classes = set()
+        admitted_ops: dict[str, set] = {}
         context_needed = []
         for p, m, vd in cand:
-            if m.defect_class in admitted_classes:
+            ops = admitted_ops.setdefault(m.defect_class, set())
+            # at most MAX_PER_CLASS admitted variants per class, each from a different operator
+            if len(ops) >= MAX_PER_CLASS or m.operator in ops:
                 continue
             c.put(f"/testbed/{p}", m.new_source)
             vres, vlog = run_tests(c, cmd)
@@ -411,7 +419,7 @@ def process_instance(row: dict, out_dir: Path, log) -> dict:
             else:
                 info["n_tests_passed"] = len(gold_pass)
                 rec["variants"].append(info)
-                admitted_classes.add(m.defect_class)
+                ops.add(m.operator)
                 context_needed.append(vd)
         rec["gold_diff"] = gold_diff
         rec["gold_stats"] = diff_stats(gold_diff)
@@ -447,6 +455,10 @@ def main():
     ap.add_argument("--out", default="data/build")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--max-instances", type=int, default=400)
+    ap.add_argument("--start", type=int, default=0, help="slice of the ordered task list")
+    ap.add_argument("--stop", type=int, default=None)
+    ap.add_argument("--shard", type=int, default=0, help="shard index within the slice")
+    ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--deadline-min", type=float, default=90.0,
                     help="stop scheduling new instances after this many minutes")
     args = ap.parse_args()
@@ -470,6 +482,8 @@ def main():
     rng = random.Random(0)
     rng.shuffle(rows)
     rows.sort(key=lambda x: x[0])
+    rows = rows[args.start: args.stop]
+    rows = [r for k, r in enumerate(rows) if k % args.num_shards == args.shard]
     rows = rows[: args.max_instances]
     print(f"pool={len(pool)} screened={len(rows)}", flush=True)
     lock = threading.Lock()

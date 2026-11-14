@@ -1,0 +1,78 @@
+\section{Experimental Setup}
+\label{sec:experiments}
+
+\textbf{Judges.}  No GPU and no commercial API were available for this project,
+so all judges are open-weight models run locally with \texttt{llama.cpp}
+(\texttt{llama-cpp-python} 0.3.36) on a 4-core Intel Xeon CPU with AMX, using
+GGUF quantisations and an 8{,}192-token context (\cref{tab:judges}).  The set
+spans two code-specialised models, two hybrid thinking/non-thinking models (run
+in non-thinking mode, plus a thinking condition for Qwen3-1.7B), and two
+general-purpose models from other families.  The resulting judges are much
+smaller than the frontier judges evaluated in \CJB{}; we therefore compare each
+judge \emph{with itself} across the two regimes rather than with the absolute
+numbers of the base paper.
+
+\begin{table}[t]
+\caption{Judge models (all instruction-tuned, run locally).}
+\label{tab:judges}
+\centering
+\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+Judge & Params & Quant. & Family / mode \\
+\midrule
+Qwen2.5-Coder-1.5B~\cite{hui2024qwen25coder} & 1.5B & Q8\_0 & code \\
+Qwen2.5-Coder-3B~\cite{hui2024qwen25coder} & 3B & Q4\_0 & code \\
+Qwen3-1.7B~\cite{yang2025qwen3} & 1.7B & Q8\_0 & hybrid (non-thinking) \\
+Qwen3-1.7B-think~\cite{yang2025qwen3} & 1.7B & Q8\_0 & hybrid (thinking) \\
+Qwen3-4B~\cite{yang2025qwen3} & 4B & Q4\_0 & hybrid (non-thinking) \\
+Llama-3.2-3B~\cite{grattafiori2024llama3} & 3B & Q4\_0 & general \\
+Gemma-3-4B~\cite{gemma2025gemma3} & 4B & Q4\_0 & general \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Evaluation sets.}  \RJB{}: all admitted, non-leaking pairs whose
+diff-only prompt fits in \MaxPromptTokens{} tokens (\NEvalPairs{} pairs).
+\CJB{} control: \NCJBPairs{} pairs, 15 per task (code generation, code repair,
+unit-test generation), sampled with a fixed seed from the responses of
+a single generator model (the one with the shortest responses) among pairs whose
+question and two responses total at most 6{,}000 characters.  The control uses
+the dataset card's prompt filling (question as user prompt, the two responses as
+answers).  Control and \RJB{} prompts are therefore of comparable length, so the
+comparison isolates the regime rather than prompt length.
+
+\textbf{Conditions.}  All judges are evaluated diff-only and on the control set,
+in both orders.  Because CPU inference is slow (roughly
+\SpeedSmall{}~tokens/s for the 1.5--1.7B judges and \SpeedLarge{}~tokens/s for
+the 3--4B judges), the more expensive conditions are run for the two fastest
+judges: context-augmented judging (retrieved context at 2{,}000 and 6{,}000
+characters, file context at 6{,}000 characters), point-wise scoring, and (for
+Qwen3-1.7B) the thinking condition on a stratified subset of \NThinkPairs{} pairs.
+
+\textbf{Baselines.}  \emph{Random}: 50\%.  \emph{Execution oracle}: the PR's
+tests, 0\% by construction.  \emph{Static analysis}: Ruff (all rules) and
+Bandit run on the materialised post-patch files; a tool votes for the patch
+without a finding the other lacks, and abstains (0.5) otherwise.  We report a
+\emph{relevant} rule set chosen in advance (Ruff BLE001, S110, S112, SIM105,
+SIM115, E722; Bandit B110, B112) and the \emph{all-rules} variant.
+
+\textbf{Deviations from the proposal.}  For transparency we list where the
+executed study differs from the proposal and why.
+(i)~\emph{Scale.}  The proposal targeted $\geq$300 pairs from $\geq$15
+repositories.  Admission requires pulling a multi-gigabyte Docker image and
+running tests for every task, and most screened tasks yield no eligible site or
+no green gold run; within the project's compute budget we obtained \NPairs{}
+pairs from \NRepos{} repositories.
+(ii)~\emph{Judges.}  No closed models could be evaluated (no API access), and
+the open models are small (1.5--4B).
+(iii)~\emph{Test oracle.}  We run the PR's relevant test files, not the full
+suite, and we do not write per-instance witness tests; defectiveness is
+guaranteed by the semantics of each operator rather than by a failing witness
+test.
+(iv)~\emph{Human validation.}  The planned two-annotator validation with
+Cohen's $\kappa$~\cite{cohen1960kappa} and the 50-pair human-reviewer ceiling
+were not carried out; we release an annotation sheet for them.
+(v)~\emph{Class balance.}  N+1, migration and authorisation sites are rare in
+issue-resolution PRs, so these classes are small and their per-class estimates
+are reported with that caveat.
