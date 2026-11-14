@@ -81,20 +81,45 @@ def main():
             f"{pct(c['acc'])} {ci(c['ci'])}" if c else "--",
             f"{pct(r['acc'])} {ci(r['ci'])}" if r else "--",
             f"{'+' if g and g['gap'] >= 0 else ''}{pct(g['gap'])}" if g else "--",
-            f"{pct(r['position_gap'])}" if r else "--",
-            f"{pct(r['flip_rate'])}" if r else "--",
-            f"{pct(r['self_consistency'])}" if r else "--",
-            str(r["n"]) if r else "--",
+            f"{pct(c['acc_calibrated'])}" if c else "--",
+            f"{pct(r['acc_calibrated'])} {ci(r['acc_calibrated_ci'])}" if r else "--",
+            f"{c['n']}/{r['n']}" if (c and r) else (f"{c['n']}/--" if c else f"--/{r['n']}"),
         ]) + " \\\\")
     (out / "tab_main.tex").write_text(
         "\\begin{table*}[t]\n\\caption{Pairwise accuracy (\\%) with 95\\% bootstrap CIs on the "
-        "\\CJB{} control subset (single-file) and on \\RJB{} (repository-level, diff-only). "
-        "$\\Delta$ = control $-$ \\RJB{}. Position gap = accuracy with gold shown first minus shown second; "
-        "flip = pairs whose verdict follows the slot rather than the content; SC = expected two-sample "
-        "self-consistency of the verdict at $T{=}1$. Random = 50\\%, execution oracle = 0\\% on \\RJB{}.}\n"
-        "\\label{tab:main}\n\\centering\\footnotesize\n\\begin{tabular}{@{}lllrrrrr@{}}\n\\toprule\n"
-        "Judge & \\CJB{} control & \\RJB{} & $\\Delta$ & Pos.\\ gap & Flip & SC & $n$ \\\\\n\\midrule\n"
+        "\\CJB{} control subset (single-file) and on \\RJB{} (repository-level, diff-only); a pair's "
+        "accuracy is the mean of its two presentation orders. $\\Delta$ = control $-$ \\RJB{}. "
+        "\\emph{Calibrated} = accuracy after balanced position calibration (the probability given to "
+        "the gold patch is averaged over both orders before deciding). Random = 50\\%; the execution "
+        "oracle scores 0\\% on \\RJB{} by construction.}\n"
+        "\\label{tab:main}\n\\centering\\footnotesize\n\\begin{tabular}{@{}lllrrlr@{}}\n\\toprule\n"
+        " & \\multicolumn{2}{c}{Accuracy} & & \\multicolumn{2}{c}{Calibrated accuracy} & \\\\\n"
+        "\\cmidrule(lr){2-3}\\cmidrule(lr){5-6}\n"
+        "Judge & \\CJB{} control & \\RJB{} & $\\Delta$ & \\CJB{} & \\RJB{} & $n$ (pairs) \\\\\n\\midrule\n"
         + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
+
+    # ---- robustness table (O5) -------------------------------------------------
+    rows = []
+    for m in models:
+        bm = S["by_model"].get(m, {})
+        c, r = bm.get("cjb_control"), bm.get("diff_only")
+        if not r and not c:
+            continue
+        f = lambda d, k: pct(d[k]) if d else "--"
+        rows.append(" & ".join([NICE.get(m, m), f(c, "position_gap"), f(r, "position_gap"),
+                                f(c, "flip_rate"), f(r, "flip_rate"), f(c, "p_choose_A"), f(r, "p_choose_A"),
+                                f(c, "self_consistency"), f(r, "self_consistency")]) + " \\\\")
+    (out / "tab_robust.tex").write_text(
+        "\\begin{table*}[t]\n\\caption{Robustness (O5), control (C) vs.\\ \\RJB{} (R), in \\%. "
+        "\\emph{Pos.\\ gap}: accuracy with the gold patch shown first minus shown second. \\emph{Flip}: "
+        "share of pairs whose verdict selects the same slot in both orders. $P(A)$: mean probability of "
+        "choosing the first slot. \\emph{SC}: expected agreement of two independent $T{=}1$ samples of "
+        "the verdict.}\n\\label{tab:robust}\n\\centering\\footnotesize\n"
+        "\\begin{tabular}{@{}lrrrrrrrr@{}}\n\\toprule\n"
+        " & \\multicolumn{2}{c}{Pos.\\ gap} & \\multicolumn{2}{c}{Flip} & \\multicolumn{2}{c}{$P(A)$} & "
+        "\\multicolumn{2}{c}{SC} \\\\\n\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}\\cmidrule(lr){8-9}\n"
+        "Judge & C & R & C & R & C & R & C & R \\\\\n\\midrule\n" + "\n".join(rows) +
+        "\n\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
 
     # ---- per-class table ---------------------------------------------------
     allj = S["by_class"].get("all_judges", {})

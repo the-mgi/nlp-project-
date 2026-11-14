@@ -92,11 +92,12 @@ def _flags(mine: Counter, other: Counter, relevant: bool) -> bool:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build", default="data/build/instances.jsonl")
+    ap.add_argument("--build", nargs="+", default=["data/build/instances.jsonl"])
     ap.add_argument("--out", default="results/raw/static_baseline.jsonl")
     args = ap.parse_args()
     rows = []
-    for line in open(args.build):
+    lines = [l for b in args.build for l in open(b)]
+    for line in lines:
         try:
             r = json.loads(line)
         except json.JSONDecodeError:
