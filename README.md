@@ -3,7 +3,11 @@
 **Does LLM-as-a-Judge reliability survive the move from self-contained functions to
 repository-level, test-passing code changes?**
 
-NLP semester research project — **Muhammad Usama (25I-8007)**.
+NLP semester research project, FAST-NUCES Islamabad.
+
+**Contributors**
+- Muhammad Usama — 25I-8007 — i258007@isb.nu.edu.pk
+- Ali Raza — 25I-8043 — i258043@isb.nu.edu.pk
 Base paper: Jiang et al., *CodeJudgeBench: Benchmarking LLM-as-a-Judge for Coding Tasks*,
 arXiv:2507.10535.
 

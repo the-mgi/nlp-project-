@@ -29,7 +29,7 @@ const D = S.dataset;
 
 const pres = new pptxgen();
 pres.layout = "LAYOUT_16x9"; // 10 x 5.625 in
-pres.author = "Muhammad Usama";
+pres.author = "Muhammad Usama; Ali Raza";
 pres.title = "RepoJudgeBench";
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 const C = pres.SchemeColor;
@@ -39,9 +39,9 @@ pres.defineSlideMaster({
   title: "DARK_TITLE",
   background: { color: C.text1 },
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 1.35, w: 8.8, h: 1.0,
+    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 1.25, w: 8.8, h: 1.0,
         fontSize: 44, bold: true, color: C.background1, align: "left", valign: "bottom" }, text: "" } },
-    { placeholder: { options: { name: "body", type: "body", x: 0.6, y: 2.45, w: 8.8, h: 1.2,
+    { placeholder: { options: { name: "body", type: "body", x: 0.6, y: 2.45, w: 8.8, h: 2.7,
         fontSize: 18, color: C.background2, align: "left", valign: "top" }, text: "" } },
   ],
 });
@@ -94,7 +94,9 @@ s.addText("RepoJudgeBench", { placeholder: "title" });
 s.addText([
   { text: "Does LLM-as-a-Judge reliability survive the move from self-contained functions to repository-level, test-passing code changes?", options: { breakLine: true } },
   { text: " ", options: { breakLine: true, fontSize: 8 } },
-  { text: "Muhammad Usama  ·  25I-8007  ·  Natural Language Processing, Semester Research Project", options: { fontSize: 13, color: C.accent2 } },
+  { text: "Muhammad Usama  ·  25I-8007  ·  i258007@isb.nu.edu.pk", options: { fontSize: 13, color: C.accent2, breakLine: true } },
+  { text: "Ali Raza  ·  25I-8043  ·  i258043@isb.nu.edu.pk", options: { fontSize: 13, color: C.accent2, breakLine: true } },
+  { text: "Natural Language Processing, Semester Research Project  ·  FAST-NUCES Islamabad", options: { fontSize: 12, color: C.background2 } },
 ], { placeholder: "body" });
 s.addNotes("Title. Base paper: Jiang et al., CodeJudgeBench (arXiv:2507.10535).");
 
