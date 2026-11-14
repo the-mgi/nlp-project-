@@ -96,12 +96,8 @@ def main():
     ap.add_argument("--out", default="results/raw/static_baseline.jsonl")
     args = ap.parse_args()
     rows = []
-    lines = [l for b in args.build for l in open(b)]
-    for line in lines:
-        try:
-            r = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    from .make_items import dedupe, load_build
+    for r in dedupe([r for b in args.build for r in load_build(b)]):
         if r.get("status") != "ok":
             continue
         files = (r.get("context") or {}).get("files", {})

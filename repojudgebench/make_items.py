@@ -37,6 +37,19 @@ def load_build(path: str) -> list[dict]:
     return recs
 
 
+def dedupe(recs: list[dict]) -> list[dict]:
+    """One record per task: a task can be logged twice when a build was resumed
+    after an interruption; keep its last successful record (else its last record)."""
+    best: dict[str, dict] = {}
+    for r in recs:
+        iid = r.get("instance_id")
+        if iid is None:
+            continue
+        if iid not in best or r.get("status") == "ok" or best[iid].get("status") != "ok":
+            best[iid] = r
+    return list(best.values())
+
+
 def leaked(gold_diff: str, issue: str) -> bool:
     issue_n = re.sub(r"\s+", " ", issue or "")
     for line in gold_diff.splitlines():
@@ -100,7 +113,7 @@ def main():
                                     add_bos=False, special=False))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    recs = [r for b in args.build for r in load_build(b)]
+    recs = dedupe([r for b in args.build for r in load_build(b)])
     items, meta_rows, n_leak = [], [], 0
     for r in recs:
         if r.get("status") != "ok":
