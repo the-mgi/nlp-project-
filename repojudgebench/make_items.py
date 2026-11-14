@@ -14,6 +14,7 @@ issue text.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from collections import Counter
@@ -80,11 +81,11 @@ def file_context(ctx: dict, budget: int) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build", default="data/build/instances.jsonl")
+    ap.add_argument("--build", nargs="+", default=["data/build/instances.jsonl"])
     ap.add_argument("--out", default="data/items")
     ap.add_argument("--tokenizer-gguf", default=None,
                     help="GGUF whose tokenizer is used to measure prompt length")
-    ap.add_argument("--max-tokens", type=int, default=4000,
+    ap.add_argument("--max-tokens", type=int, default=6000,
                     help="pairs whose diff-only prompt is longer are kept in the dataset "
                          "but not judged (CPU budget)")
     args = ap.parse_args()
@@ -99,7 +100,7 @@ def main():
                                     add_bos=False, special=False))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    recs = load_build(args.build)
+    recs = [r for b in args.build for r in load_build(b)]
     items, meta_rows, n_leak = [], [], 0
     for r in recs:
         if r.get("status") != "ok":
@@ -129,6 +130,10 @@ def main():
                 meta["judged"] = not is_leak
             meta_rows.append(meta)
             items.append((meta, r, v))
+    # deterministic pseudo-random order (stable when new pairs are added), so that
+    # any prefix of an item file is an unbiased sample for time-limited judges
+    items.sort(key=lambda t: hashlib.md5(t[0]["item_id"].encode()).hexdigest())
+    meta_rows.sort(key=lambda m: hashlib.md5(m["item_id"].encode()).hexdigest())
     with (out / "meta.jsonl").open("w") as fo:
         for m in meta_rows:
             fo.write(json.dumps(m) + "\n")
