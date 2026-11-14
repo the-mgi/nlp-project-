@@ -82,7 +82,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build", default="data/build/instances.jsonl")
     ap.add_argument("--out", default="data/items")
+    ap.add_argument("--tokenizer-gguf", default=None,
+                    help="GGUF whose tokenizer is used to measure prompt length")
+    ap.add_argument("--max-tokens", type=int, default=4000,
+                    help="pairs whose diff-only prompt is longer are kept in the dataset "
+                         "but not judged (CPU budget)")
     args = ap.parse_args()
+    count_tokens = None
+    if args.tokenizer_gguf:
+        from llama_cpp import Llama
+        from .prompts import CJB_PAIRWISE
+        tok = Llama(model_path=args.tokenizer_gguf, vocab_only=True, verbose=False)
+
+        def count_tokens(q, a, b):
+            return len(tok.tokenize(CJB_PAIRWISE.format(query=q, answer_a=a, answer_b=b).encode(),
+                                    add_bos=False, special=False))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     recs = load_build(args.build)
@@ -95,7 +109,7 @@ def main():
         for v in r["variants"]:
             gs, vs = r["gold_stats"], v["variant_stats"]
             meta = {
-                "item_id": f"{r['instance_id']}::{v['defect_class']}",
+                "item_id": f"{r['instance_id']}::{v['defect_class']}::{v['operator']}",
                 "instance_id": r["instance_id"], "repo": r["repo"], "source": r["source"],
                 "created_at": r["created_at"], "defect_class": v["defect_class"],
                 "operator": v["operator"], "site_origin": v["site_origin"],
@@ -106,6 +120,13 @@ def main():
                 "n_tests_passed": v.get("n_tests_passed"), "solution_leak": is_leak,
                 "license_name": r.get("license_name"),
             }
+            if count_tokens is not None:
+                meta["prompt_tokens"] = count_tokens(
+                    repo_query(r["repo"], r.get("problem_statement", "")),
+                    patch_answer(r["gold_diff"]), patch_answer(v["variant_diff"]))
+                meta["judged"] = (meta["prompt_tokens"] <= args.max_tokens) and not is_leak
+            else:
+                meta["judged"] = not is_leak
             meta_rows.append(meta)
             items.append((meta, r, v))
     with (out / "meta.jsonl").open("w") as fo:
@@ -118,7 +139,7 @@ def main():
     for cname, spec in conds.items():
         with (out / f"{cname}.jsonl").open("w") as fo:
             for meta, r, v in items:
-                if meta["solution_leak"]:
+                if not meta["judged"]:
                     continue
                 context = None
                 if spec:
@@ -130,7 +151,7 @@ def main():
                                      "pos": patch_answer(r["gold_diff"]),
                                      "neg": patch_answer(v["variant_diff"]),
                                      "defect_class": meta["defect_class"]}) + "\n")
-    print(f"pairs={len(items)} leak_instances={n_leak} "
+    print(f"pairs={len(items)} judged={sum(m['judged'] for m in meta_rows)} leak_instances={n_leak} "
           f"classes={Counter(m['defect_class'] for m in meta_rows)} "
           f"repos={len({m['repo'] for m in meta_rows})}")
 

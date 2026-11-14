@@ -70,6 +70,30 @@ def boot_ci(values: np.ndarray, stat=np.mean, b: int = B, seed: int = RNG_SEED) 
     return (float(np.percentile(stats, 2.5)), float(np.percentile(stats, 97.5)))
 
 
+def cluster_boot_ci(values: np.ndarray, clusters: np.ndarray, b: int = B,
+                    seed: int = RNG_SEED) -> tuple[float, float]:
+    """Percentile bootstrap that resamples *clusters* (tasks) with replacement, so
+    that several pairs built from the same pull request are not treated as
+    independent."""
+    values = np.asarray(values, dtype=float)
+    if len(values) == 0:
+        return (math.nan, math.nan)
+    codes, uniq = pd.factorize(pd.Series(clusters))
+    k = len(uniq)
+    sums = np.bincount(codes, weights=values, minlength=k)
+    cnts = np.bincount(codes, minlength=k).astype(float)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, k, size=(b, k))
+    stats = sums[idx].sum(axis=1) / cnts[idx].sum(axis=1)
+    return (float(np.percentile(stats, 2.5)), float(np.percentile(stats, 97.5)))
+
+
+def _ci(values, pt: pd.DataFrame | None = None):
+    if pt is not None and "cluster" in pt:
+        return cluster_boot_ci(values, pt["cluster"].to_numpy())
+    return boot_ci(values)
+
+
 def pair_table(v: pd.DataFrame) -> pd.DataFrame:
     """One row per (model, condition, item) with both orders."""
     pw = v[v["mode"] == "pairwise"]
@@ -88,15 +112,17 @@ def pair_table(v: pd.DataFrame) -> pd.DataFrame:
     piv["self_consistency"] = 0.5 * ((piv["p_a_AB"] ** 2 + (1 - piv["p_a_AB"]) ** 2)
                                      + (piv["p_a_BA"] ** 2 + (1 - piv["p_a_BA"]) ** 2))
     piv["p_first"] = 0.5 * (piv["p_a_AB"] + piv["p_a_BA"])  # mean prob. of choosing slot A
+    # cluster = source task (pairs from one pull request share the gold patch)
+    piv["cluster"] = piv["item_id"].map(lambda x: x if x.startswith("cjb::") else x.split("::")[0])
     return piv
 
 
 def summarise(pt: pd.DataFrame) -> dict:
     acc = pt["acc"].to_numpy()
-    lo, hi = boot_ci(acc)
+    lo, hi = _ci(acc, pt)
     ab, ba = pt["correct_AB"].to_numpy(), pt["correct_BA"].to_numpy()
     gap = ab - ba
-    glo, ghi = boot_ci(gap)
+    glo, ghi = _ci(gap, pt)
     sc = pt["self_consistency"].to_numpy()
     return {"n": int(len(pt)), "acc": float(acc.mean()), "ci": [lo, hi],
             "acc_gold_first": float(ab.mean()), "acc_gold_second": float(ba.mean()),
@@ -105,13 +131,14 @@ def summarise(pt: pd.DataFrame) -> dict:
             "both_correct": float(pt["both_correct"].mean()),
             "p_choose_A": float(pt["p_first"].mean()),
             "self_consistency": float(sc.mean()),
-            "self_consistency_ci": list(boot_ci(sc))}
+            "self_consistency_ci": list(_ci(sc, pt)),
+            "n_clusters": int(pt["cluster"].nunique()) if "cluster" in pt else int(len(pt))}
 
 
 def paired_diff(a: pd.Series, b: pd.Series) -> dict:
     j = pd.concat([a.rename("a"), b.rename("b")], axis=1).dropna()
     d = (j["a"] - j["b"]).to_numpy()
-    lo, hi = boot_ci(d)
+    lo, hi = cluster_boot_ci(d, np.array([str(i).split("::")[0] for i in j.index]))
     return {"n": int(len(d)), "diff": float(d.mean()) if len(d) else math.nan, "ci": [lo, hi]}
 
 
