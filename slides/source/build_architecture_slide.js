@@ -100,7 +100,7 @@ s.addText([
   { text: "Execution phases", options: { bold: true, color: C.accent3, fontSize: 12, breakLine: true } },
   { text: "1  Build: each worker builds 1/5 of the PRs in Docker, injects defects, runs tests", options: { breakLine: true } },
   { text: "2  Merge: master collects shards, builds judge items + static baseline, pushes items", options: { breakLine: true } },
-  { text: "3  Judge: each worker runs its LLM judges (both orders)", options: { breakLine: true } },
+  { text: "3  Judge: each worker runs its judge models (both orders)", options: { breakLine: true } },
   { text: "4  Collect: verdicts → master → analysis, paper, slides, results.tgz", options: {} },
 ], T({ x: 7.2, y: 3.02, w: 2.42, h: 2.44, fontSize: 10, color: C.text1, valign: "top", paraSpaceAfter: 3 }));
 

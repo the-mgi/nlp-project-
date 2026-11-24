@@ -1,4 +1,4 @@
-# master: SSH from your IP only; everything from the workers
+# master: SSH from the operator IP only; everything from the workers
 resource "aws_security_group" "master" {
   name        = "rjb-master"
   description = "RepoJudgeBench master"
